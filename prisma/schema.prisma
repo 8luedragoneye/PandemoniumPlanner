@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String
+  name      String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdActivities Activity[] @relation("ActivityCreator")
+  signups          Signup[]
+
+  @@map("users")
+}
+
+model Activity {
+  id          String   @id @default(cuid())
+  name        String
+  date        DateTime
+  description String
+  status      String   @default("recruiting") // recruiting, full, running
+  zone        String?
+  minIP       Int?
+  minFame     Int?
+  creatorId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  creator User @relation("ActivityCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  roles   Role[]
+  signups Signup[]
+
+  @@map("activities")
+}
+
+model Role {
+  id         String   @id @default(cuid())
+  activityId String
+  name       String
+  slots      Int
+  attributes String   @default("{}") // JSON string
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  signups  Signup[]
+
+  @@map("roles")
+}
+
+model Signup {
+  id         String   @id @default(cuid())
+  activityId String
+  roleId     String
+  playerId   String
+  attributes String   @default("{}") // JSON string
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  role     Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  player   User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@map("signups")
+}

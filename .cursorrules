@@ -1,0 +1,121 @@
+# Pandemonium Planner - Cursor Rules
+
+## Core Principles
+
+### KISS (Keep It Simple, Stupid)
+- **Prefer simple solutions over complex ones**
+- Avoid over-engineering; solve the problem at hand, not hypothetical future problems
+- Use built-in language features before reaching for libraries
+- Write code that is easy to read and understand
+- If a solution seems too complicated, there's probably a simpler way
+
+### Modular Design
+- **Single Responsibility Principle**: Each module/component/function should do one thing well
+- **Separation of Concerns**: Keep frontend, backend, and data layers distinct
+- **Composable Components**: Build small, reusable components that can be combined
+- **Clear Boundaries**: Each module should have a well-defined interface and purpose
+- **Avoid Tight Coupling**: Modules should depend on interfaces, not implementations
+
+## Project Structure
+
+### Frontend (`src/`)
+- **Components** (`src/components/`): Presentational and container components
+  - Keep components small and focused
+  - Extract reusable logic into custom hooks
+  - Use TypeScript interfaces for props
+- **Contexts** (`src/contexts/`): Global state management
+  - Keep contexts minimal; prefer local state when possible
+- **Hooks** (`src/hooks/`): Custom React hooks for reusable logic
+- **Lib** (`src/lib/`): Utility functions and API clients
+- **Types** (`src/types/`): Shared TypeScript type definitions
+
+### Backend (`server/`)
+- **Routes** (`server/routes/`): Express route handlers
+  - One file per resource/domain
+  - Keep route handlers thin; delegate to services
+- **Services** (`server/services/`): Business logic and data processing
+- **Middleware** (`server/middleware/`): Express middleware (auth, validation, etc.)
+- **Database**: Use Prisma for all database operations
+
+## Code Style
+
+### TypeScript
+- **Strict typing**: Avoid `any`; use `unknown` if type is truly unknown
+- **Interfaces over types**: Prefer `interface` for object shapes
+- **Explicit return types**: Add return types to functions (especially public APIs)
+- **Type inference**: Let TypeScript infer types for simple variables
+
+### React
+- **Functional components**: Always use function components with hooks
+- **Custom hooks**: Extract reusable logic into custom hooks
+- **Props destructuring**: Destructure props in function parameters
+- **Conditional rendering**: Use early returns for cleaner code
+- **Keys**: Always provide stable keys for list items
+
+### Express/Backend
+- **Async/await**: Use async/await over promises chains
+- **Error handling**: Always handle errors; use try/catch in async routes
+- **Status codes**: Use appropriate HTTP status codes
+- **Validation**: Validate input at route boundaries
+- **Environment variables**: Use env vars for configuration
+
+## File Naming
+
+- **Components**: PascalCase (e.g., `ActivityCard.tsx`)
+- **Hooks**: camelCase with `use` prefix (e.g., `useActivities.ts`)
+- **Utilities**: camelCase (e.g., `api.ts`, `utils.ts`)
+- **Routes**: camelCase (e.g., `activities.ts`, `auth.ts`)
+- **Services**: camelCase (e.g., `nameValidation.ts`)
+
+## Best Practices
+
+### When Adding Features
+1. **Start simple**: Implement the minimum viable version first
+2. **Modularize**: Break into small, testable pieces
+3. **Reuse**: Check for existing utilities/components before creating new ones
+4. **Type safety**: Define types before implementing logic
+5. **Error handling**: Consider error cases from the start
+
+### When Refactoring
+1. **One change at a time**: Make incremental improvements
+2. **Preserve behavior**: Don't change functionality while refactoring
+3. **Update types**: Keep TypeScript types in sync with code changes
+4. **Test manually**: Verify changes work as expected
+
+### Code Organization
+- **Group related code**: Keep related functions/types together
+- **Export explicitly**: Use named exports for clarity
+- **Import order**: Group imports (external, internal, types)
+- **Comments**: Write self-documenting code; comment only when necessary
+
+## Database (Prisma)
+
+- **Schema first**: Define schema in `prisma/schema.prisma`
+- **Migrations**: Always create migrations for schema changes
+- **Queries**: Use Prisma client; avoid raw SQL unless necessary
+- **Relations**: Leverage Prisma relations for data integrity
+
+## API Design
+
+- **RESTful**: Follow REST conventions for routes
+- **Consistent responses**: Use consistent response formats
+- **Error messages**: Provide clear, actionable error messages
+- **Status codes**: Use appropriate HTTP status codes (200, 201, 400, 401, 404, 500)
+
+## Avoid
+
+- ❌ Over-abstracting: Don't create abstractions until you need them
+- ❌ Premature optimization: Write clear code first, optimize if needed
+- ❌ Magic numbers/strings: Use constants or enums
+- ❌ Deep nesting: Prefer early returns and guard clauses
+- ❌ Large files: Split files that exceed ~300 lines
+- ❌ Duplicate code: Extract common patterns into utilities/hooks
+- ❌ Complex state: Prefer local state; use context sparingly
+
+## Remember
+
+- **Readability > Cleverness**: Code is read more than written
+- **Simple > Complex**: The simplest solution that works is the best
+- **Modular > Monolithic**: Small, focused modules are easier to maintain
+- **Type safety**: Let TypeScript catch errors at compile time
+- **User experience**: Prioritize functionality and user experience over perfect architecture
