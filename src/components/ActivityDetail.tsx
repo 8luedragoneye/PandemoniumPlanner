@@ -3,7 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useActivities } from '../hooks/useActivities';
 import { Activity, Role, Signup } from '../types';
-import { formatDisplayDate, getSignupCount, isRoleFull, checkOverlap, isUpcoming } from '../lib/utils';
+import { formatDisplayDate, isRoleFull, checkOverlap, isUpcoming } from '../lib/utils';
+import { transformActivity, transformRole, transformSignup } from '../lib/transformers';
 import { RoleManager } from './RoleManager';
 import { SignupForm } from './SignupForm';
 import { activitiesApi, signupsApi, rolesApi } from '../lib/api';
@@ -27,60 +28,20 @@ export function ActivityDetail() {
     const fetchActivity = async () => {
       try {
         const record = await activitiesApi.getOne(id);
-        // Transform API response
-        const activity: Activity = {
-          id: record.id,
-          name: record.name,
-          date: record.date,
-          description: record.description,
-          creator: record.creatorId,
-          status: record.status,
-          zone: record.zone,
-          minIP: record.minIP,
-          minFame: record.minFame,
-          created: record.createdAt,
-          updated: record.updatedAt,
-          expand: {
-            creator: record.creator,
-          },
-        };
-        setActivity(activity);
+        const transformedActivity = transformActivity(record);
+        setActivity(transformedActivity);
         
         // Fetch roles and signups for this activity
         try {
           const roleRecords = await rolesApi.getByActivity(id);
-          const transformedRoles = roleRecords.map((r: any) => ({
-            id: r.id,
-            activity: r.activityId,
-            name: r.name,
-            slots: r.slots,
-            attributes: typeof r.attributes === 'string' ? JSON.parse(r.attributes) : r.attributes,
-            created: r.createdAt,
-            updated: r.updatedAt,
-          }));
-          setActivityRoles(transformedRoles);
+          setActivityRoles(roleRecords.map(transformRole));
         } catch (error) {
           console.error('Error fetching roles:', error);
         }
         
         try {
           const signupRecords = await signupsApi.getByActivity(id);
-          const transformedSignups = signupRecords.map((s: any) => ({
-            id: s.id,
-            activity: s.activityId,
-            role: s.roleId,
-            player: s.playerId,
-            attributes: typeof s.attributes === 'string' ? JSON.parse(s.attributes) : s.attributes,
-            comment: s.comment,
-            created: s.createdAt,
-            updated: s.updatedAt,
-            expand: {
-              activity: s.activity,
-              role: s.role,
-              player: s.player,
-            },
-          }));
-          setActivitySignups(transformedSignups);
+          setActivitySignups(signupRecords.map(transformSignup));
         } catch (error) {
           console.error('Error fetching signups:', error);
         }
@@ -145,22 +106,7 @@ export function ActivityDetail() {
     // Refetch signups for this activity
     try {
       const records = await signupsApi.getByActivity(id!);
-      const transformed = records.map((s: any) => ({
-        id: s.id,
-        activity: s.activityId,
-        role: s.roleId,
-        player: s.playerId,
-        attributes: typeof s.attributes === 'string' ? JSON.parse(s.attributes) : s.attributes,
-        comment: s.comment,
-        created: s.createdAt,
-        updated: s.updatedAt,
-        expand: {
-          activity: s.activity,
-          role: s.role,
-          player: s.player,
-        },
-      }));
-      setActivitySignups(transformed);
+      setActivitySignups(records.map(transformSignup));
       refetch(); // Also refetch all data
     } catch (error) {
       console.error('Error refetching signups:', error);
@@ -241,34 +187,10 @@ export function ActivityDetail() {
                 // Refetch roles and signups
                 try {
                   const roleRecords = await rolesApi.getByActivity(activity.id);
-                  const transformedRoles = roleRecords.map((r: any) => ({
-                    id: r.id,
-                    activity: r.activityId,
-                    name: r.name,
-                    slots: r.slots,
-                    attributes: typeof r.attributes === 'string' ? JSON.parse(r.attributes) : r.attributes,
-                    created: r.createdAt,
-                    updated: r.updatedAt,
-                  }));
-                  setActivityRoles(transformedRoles);
+                  setActivityRoles(roleRecords.map(transformRole));
                   
                   const signupRecords = await signupsApi.getByActivity(activity.id);
-                  const transformedSignups = signupRecords.map((s: any) => ({
-                    id: s.id,
-                    activity: s.activityId,
-                    role: s.roleId,
-                    player: s.playerId,
-                    attributes: typeof s.attributes === 'string' ? JSON.parse(s.attributes) : s.attributes,
-                    comment: s.comment,
-                    created: s.createdAt,
-                    updated: s.updatedAt,
-                    expand: {
-                      activity: s.activity,
-                      role: s.role,
-                      player: s.player,
-                    },
-                  }));
-                  setActivitySignups(transformedSignups);
+                  setActivitySignups(signupRecords.map(transformSignup));
                   refetch();
                 } catch (error) {
                   console.error('Error refetching:', error);
@@ -385,22 +307,7 @@ export function ActivityDetail() {
                                             await signupsApi.delete(signup.id);
                                             // Refetch signups
                                             const records = await signupsApi.getByActivity(activity.id);
-                                            const transformed = records.map((s: any) => ({
-                                              id: s.id,
-                                              activity: s.activityId,
-                                              role: s.roleId,
-                                              player: s.playerId,
-                                              attributes: typeof s.attributes === 'string' ? JSON.parse(s.attributes) : s.attributes,
-                                              comment: s.comment,
-                                              created: s.createdAt,
-                                              updated: s.updatedAt,
-                                              expand: {
-                                                activity: s.activity,
-                                                role: s.role,
-                                                player: s.player,
-                                              },
-                                            }));
-                                            setActivitySignups(transformed);
+                                            setActivitySignups(records.map(transformSignup));
                                             refetch();
                                           } catch (error) {
                                             alert('Failed to remove sign-up');

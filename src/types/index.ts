@@ -1,48 +1,58 @@
-import { RecordModel } from 'pocketbase';
-
-// Base types from PocketBase
-export type User = RecordModel & {
+// Base types matching Prisma schema
+export interface User {
+  id: string;
   email: string;
   username: string;
   name: string;
-};
+  createdAt: string;
+  updatedAt: string;
+}
 
-export type Activity = RecordModel & {
+export interface Activity {
+  id: string;
   name: string;
   date: string; // ISO datetime string
   description: string;
-  creator: string; // User ID
+  creator: string; // User ID (creatorId from backend)
   status: 'recruiting' | 'full' | 'running';
-  zone?: string;
-  minIP?: number;
-  minFame?: number;
+  zone?: string | null;
+  minIP?: number | null;
+  minFame?: number | null;
+  created: string; // createdAt
+  updated: string; // updatedAt
   expand?: {
     creator?: User;
   };
-};
+}
 
-export type Role = RecordModel & {
-  activity: string; // Activity ID
+export interface Role {
+  id: string;
+  activity: string; // Activity ID (activityId from backend)
   name: string;
   slots: number;
-  attributes: Record<string, any>; // JSON object
+  attributes: Record<string, unknown>; // JSON object
+  created: string; // createdAt
+  updated: string; // updatedAt
   expand?: {
     activity?: Activity;
   };
-};
+}
 
-export type Signup = RecordModel & {
-  activity: string; // Activity ID
-  role: string; // Role ID
-  player: string; // User ID
-  attributes: Record<string, any>; // JSON object (user's values)
-  comment?: string;
+export interface Signup {
+  id: string;
+  activity: string; // Activity ID (activityId from backend)
+  role: string; // Role ID (roleId from backend)
+  player: string; // User ID (playerId from backend)
+  attributes: Record<string, unknown>; // JSON object (user's values)
+  comment?: string | null;
+  created: string; // createdAt
+  updated: string; // updatedAt
   expand?: {
     activity?: Activity;
     role?: Role;
     player?: User;
   };
-};
+}
 
 // Form types
 export interface ActivityFormData {

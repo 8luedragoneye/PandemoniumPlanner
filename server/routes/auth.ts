@@ -1,11 +1,10 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { validateName, findUserByName } from '../services/nameValidation';
+import prisma from '../lib/prisma';
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 // Helper function to find or create user
 // Note: Authentication is name-only. Email and password are placeholders for database schema requirements.

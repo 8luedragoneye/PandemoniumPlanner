@@ -1,3 +1,5 @@
+import type { ApiActivity, ApiRole, ApiSignup, ApiUser, AuthResponse, ApiError } from './apiTypes';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 // Get auth token from localStorage
@@ -6,12 +8,12 @@ function getToken(): string | null {
 }
 
 // Set auth token
-export function setToken(token: string) {
+export function setToken(token: string): void {
   localStorage.setItem('token', token);
 }
 
 // Remove auth token
-export function removeToken() {
+export function removeToken(): void {
   localStorage.removeItem('token');
 }
 
@@ -37,7 +39,7 @@ async function request<T>(
 
   if (!response.ok) {
     const errorText = await response.text();
-    let error;
+    let error: ApiError;
     try {
       error = JSON.parse(errorText);
     } catch {
@@ -53,78 +55,73 @@ async function request<T>(
 
 // Auth API
 export const authApi = {
-  register: async (name: string) => {
-    try {
-      console.log('Sending register request for name:', name);
-      const data = await request<{ user: any; token: string }>('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({ name }),
-      });
-      console.log('Register API response:', data);
-      if (data && data.token) {
-        setToken(data.token);
-        console.log('Token saved to localStorage');
-      } else {
-        console.error('No token in response:', data);
-      }
-      return data;
-    } catch (error) {
-      console.error('Register API error:', error);
-      throw error;
+  register: async (name: string): Promise<AuthResponse> => {
+    const data = await request<AuthResponse>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    });
+    if (data?.token) {
+      setToken(data.token);
     }
+    return data;
   },
 
-  login: async (name: string) => {
-    try {
-      console.log('Sending login request for name:', name);
-      const data = await request<{ user: any; token: string }>('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ name }),
-      });
-      console.log('Login API response:', data);
-      if (data && data.token) {
-        setToken(data.token);
-        console.log('Token saved to localStorage');
-      } else {
-        console.error('No token in response:', data);
-      }
-      return data;
-    } catch (error) {
-      console.error('Login API error:', error);
-      throw error;
+  login: async (name: string): Promise<AuthResponse> => {
+    const data = await request<AuthResponse>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    });
+    if (data?.token) {
+      setToken(data.token);
     }
+    return data;
   },
 
-  getMe: async () => {
-    return request<{ user: any }>('/auth/me');
+  getMe: async (): Promise<{ user: ApiUser }> => {
+    return request<{ user: ApiUser }>('/auth/me');
   },
 };
 
 // Activities API
 export const activitiesApi = {
-  getAll: async () => {
-    return request<any[]>('/activities');
+  getAll: async (): Promise<ApiActivity[]> => {
+    return request<ApiActivity[]>('/activities');
   },
 
-  getOne: async (id: string) => {
-    return request<any>(`/activities/${id}`);
+  getOne: async (id: string): Promise<ApiActivity> => {
+    return request<ApiActivity>(`/activities/${id}`);
   },
 
-  create: async (data: any) => {
-    return request<any>('/activities', {
+  create: async (data: {
+    name: string;
+    date: string;
+    description: string;
+    zone?: string;
+    minIP?: number;
+    minFame?: number;
+  }): Promise<ApiActivity> => {
+    return request<ApiActivity>('/activities', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   },
 
-  update: async (id: string, data: any) => {
-    return request<any>(`/activities/${id}`, {
+  update: async (id: string, data: {
+    name?: string;
+    date?: string;
+    description?: string;
+    zone?: string;
+    minIP?: number;
+    minFame?: number;
+    status?: 'recruiting' | 'full' | 'running';
+  }): Promise<ApiActivity> => {
+    return request<ApiActivity>(`/activities/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   },
 
-  delete: async (id: string) => {
+  delete: async (id: string): Promise<{ message: string }> => {
     return request<{ message: string }>(`/activities/${id}`, {
       method: 'DELETE',
     });
@@ -133,25 +130,34 @@ export const activitiesApi = {
 
 // Roles API
 export const rolesApi = {
-  getByActivity: async (activityId: string) => {
-    return request<any[]>(`/roles/activity/${activityId}`);
+  getByActivity: async (activityId: string): Promise<ApiRole[]> => {
+    return request<ApiRole[]>(`/roles/activity/${activityId}`);
   },
 
-  create: async (data: any) => {
-    return request<any>('/roles', {
+  create: async (data: {
+    activityId: string;
+    name: string;
+    slots: number;
+    attributes?: Record<string, unknown>;
+  }): Promise<ApiRole> => {
+    return request<ApiRole>('/roles', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   },
 
-  update: async (id: string, data: any) => {
-    return request<any>(`/roles/${id}`, {
+  update: async (id: string, data: {
+    name?: string;
+    slots?: number;
+    attributes?: Record<string, unknown>;
+  }): Promise<ApiRole> => {
+    return request<ApiRole>(`/roles/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   },
 
-  delete: async (id: string) => {
+  delete: async (id: string): Promise<{ message: string }> => {
     return request<{ message: string }>(`/roles/${id}`, {
       method: 'DELETE',
     });
@@ -160,25 +166,33 @@ export const rolesApi = {
 
 // Signups API
 export const signupsApi = {
-  getByActivity: async (activityId: string) => {
-    return request<any[]>(`/signups/activity/${activityId}`);
+  getByActivity: async (activityId: string): Promise<ApiSignup[]> => {
+    return request<ApiSignup[]>(`/signups/activity/${activityId}`);
   },
 
-  create: async (data: any) => {
-    return request<any>('/signups', {
+  create: async (data: {
+    activityId: string;
+    roleId: string;
+    attributes?: Record<string, unknown>;
+    comment?: string;
+  }): Promise<ApiSignup> => {
+    return request<ApiSignup>('/signups', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   },
 
-  update: async (id: string, data: any) => {
-    return request<any>(`/signups/${id}`, {
+  update: async (id: string, data: {
+    attributes?: Record<string, unknown>;
+    comment?: string;
+  }): Promise<ApiSignup> => {
+    return request<ApiSignup>(`/signups/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   },
 
-  delete: async (id: string) => {
+  delete: async (id: string): Promise<{ message: string }> => {
     return request<{ message: string }>(`/signups/${id}`, {
       method: 'DELETE',
     });

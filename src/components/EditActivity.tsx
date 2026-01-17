@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Activity, ActivityFormData } from '../types';
 import { formatCETDate } from '../lib/utils';
+import { transformActivity } from '../lib/transformers';
 import { activitiesApi } from '../lib/api';
 
 export function EditActivity() {
@@ -28,24 +29,7 @@ export function EditActivity() {
     const fetchActivity = async () => {
       try {
         const record = await activitiesApi.getOne(id);
-        
-        // Transform API response
-        const activity: Activity = {
-          id: record.id,
-          name: record.name,
-          date: record.date,
-          description: record.description,
-          creator: record.creatorId,
-          status: record.status,
-          zone: record.zone,
-          minIP: record.minIP,
-          minFame: record.minFame,
-          created: record.createdAt,
-          updated: record.updatedAt,
-          expand: {
-            creator: record.creator,
-          },
-        };
+        const activity = transformActivity(record);
         
         if (activity.creator !== user?.id) {
           navigate('/');
