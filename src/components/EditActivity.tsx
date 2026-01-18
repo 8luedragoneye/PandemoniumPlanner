@@ -139,8 +139,8 @@ export function EditActivity() {
       setFormData(prev => ({ ...prev, date: isoString }));
     }
     
-    // Auto-set massup time if not already set
-    if (timeInput && !massupTimeInput) {
+    // Auto-update massup time when date changes (if time is set)
+    if (timeInput) {
       setMassupTimeInput(timeInput);
     }
     setError('');
@@ -176,10 +176,8 @@ export function EditActivity() {
       }
     }
     
-    // Auto-set massup time if not already set
-    if (!massupTimeInput) {
-      setMassupTimeInput(time);
-    }
+    // Auto-update massup time when time changes
+    setMassupTimeInput(time);
     setError('');
   };
 
@@ -235,8 +233,8 @@ export function EditActivity() {
         }
       }
       
-      // Auto-set massup time if not already set and time is valid
-      if (!massupTimeInput && timePattern.test(value)) {
+      // Auto-update massup time when time changes (if valid)
+      if (timePattern.test(value)) {
         setMassupTimeInput(value);
       }
     }

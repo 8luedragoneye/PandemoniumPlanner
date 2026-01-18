@@ -102,8 +102,8 @@ export function CreateActivity() {
       setFormData(prev => ({ ...prev, date: isoString }));
     }
     
-    // Auto-set massup time if not already set
-    if (timeInput && !massupTimeInput) {
+    // Auto-update massup time when date changes (if time is set)
+    if (timeInput) {
       setMassupTimeInput(timeInput);
     }
   };
@@ -137,10 +137,8 @@ export function CreateActivity() {
       }
     }
     
-    // Auto-set massup time if not already set
-    if (!massupTimeInput) {
-      setMassupTimeInput(time);
-    }
+    // Auto-update massup time when time changes
+    setMassupTimeInput(time);
   };
 
   // Generate next 4 hours from current time in CET (rounded up)
@@ -195,8 +193,8 @@ export function CreateActivity() {
         }
       }
       
-      // Auto-set massup time if not already set and time is valid
-      if (!massupTimeInput && timePattern.test(value)) {
+      // Auto-update massup time when time changes (if valid)
+      if (timePattern.test(value)) {
         setMassupTimeInput(value);
       }
     }
