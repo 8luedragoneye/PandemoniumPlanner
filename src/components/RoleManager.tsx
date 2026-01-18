@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Role, Signup } from '../types';
 import { getSignupCount, isRoleFull } from '../lib/utils';
 import { rolesApi } from '../lib/api';
@@ -13,6 +13,12 @@ interface RoleManagerProps {
 export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManagerProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [localRoles, setLocalRoles] = useState<Role[]>(roles);
+  
+  // Sync local roles with props when they change
+  useEffect(() => {
+    setLocalRoles(roles);
+  }, [roles]);
   const [formData, setFormData] = useState({
     name: '',
     slots: 1,
@@ -49,43 +55,88 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('handleSubmit called', { editingRole: editingRole?.id, formData });
     setError('');
     setLoading(true);
 
     try {
       if (editingRole) {
-        await rolesApi.update(editingRole.id, {
+        console.log('Updating role:', editingRole.id, 'with data:', {
           name: formData.name,
           slots: formData.slots,
           attributes: formData.attributes,
         });
+        const updated = await rolesApi.update(editingRole.id, {
+          name: formData.name,
+          slots: formData.slots,
+          attributes: formData.attributes,
+        });
+        console.log('Role updated successfully:', updated);
+        // Call onUpdate to refresh the roles list BEFORE closing form
+        if (onUpdate) {
+          console.log('Calling onUpdate callback...');
+          await onUpdate();
+          console.log('onUpdate callback completed');
+        } else {
+          console.warn('onUpdate callback is not defined!');
+        }
       } else {
+        console.log('Creating new role with data:', {
+          activityId,
+          name: formData.name,
+          slots: formData.slots,
+          attributes: formData.attributes,
+        });
         await rolesApi.create({
           activityId,
           name: formData.name,
           slots: formData.slots,
           attributes: formData.attributes,
         });
+        console.log('Role created successfully');
+        // Call onUpdate to refresh the roles list BEFORE closing form
+        if (onUpdate) {
+          console.log('Calling onUpdate callback...');
+          await onUpdate();
+          console.log('onUpdate callback completed');
+        } else {
+          console.warn('onUpdate callback is not defined!');
+        }
       }
       setShowForm(false);
       setEditingRole(null);
       setFormData({ name: '', slots: 1, attributes: {} });
-      if (onUpdate) onUpdate();
+      console.log('Form reset and closed');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to save role');
+      console.error('Error saving role:', err);
     } finally {
       setLoading(false);
     }
   };
 
   const handleEdit = (role: Role) => {
+    // Reset form state first
+    setError('');
+    setNewAttributeKey('');
+    setNewAttributeValue('');
+    
+    // Set editing role and populate form
     setEditingRole(role);
     setFormData({
       name: role.name,
       slots: role.slots,
-      attributes: role.attributes,
+      attributes: { ...role.attributes }, // Create a copy to avoid reference issues
     });
     setShowForm(true);
+    
+    // Scroll form into view
+    setTimeout(() => {
+      const formElement = document.querySelector('[data-role-form]');
+      if (formElement) {
+        formElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, 100);
   };
 
   const handleDelete = async (role: Role) => {
@@ -110,11 +161,24 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
           Manage Roles
         </h2>
         <button
+          type="button"
           className="btn-primary"
           onClick={() => {
+            // Reset form state
+            setError('');
+            setNewAttributeKey('');
+            setNewAttributeValue('');
             setEditingRole(null);
             setFormData({ name: '', slots: 1, attributes: {} });
             setShowForm(true);
+            
+            // Scroll form into view
+            setTimeout(() => {
+              const formElement = document.querySelector('[data-role-form]');
+              if (formElement) {
+                formElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              }
+            }, 100);
           }}
         >
           + Add Role
@@ -264,6 +328,9 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
                   setShowForm(false);
                   setEditingRole(null);
                   setFormData({ name: '', slots: 1, attributes: {} });
+                  setError('');
+                  setNewAttributeKey('');
+                  setNewAttributeValue('');
                 }}
               >
                 Cancel
@@ -273,11 +340,11 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
         </div>
       )}
 
-      {roles.length === 0 ? (
+      {localRoles.length === 0 ? (
         <p className="text-dim">No roles defined. Add roles to allow sign-ups.</p>
       ) : (
         <div>
-          {roles.map(role => {
+          {localRoles.map(role => {
             const count = getSignupCount(role.id, signups);
             const full = isRoleFull(role.id, role.slots, signups);
             return (
@@ -306,12 +373,14 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
                   </div>
                   <div className="flex" style={{ gap: '0.5rem' }}>
                     <button
+                      type="button"
                       className="btn-secondary"
                       onClick={() => handleEdit(role)}
                     >
                       Edit
                     </button>
                     <button
+                      type="button"
                       className="btn-danger"
                       onClick={() => handleDelete(role)}
                     >

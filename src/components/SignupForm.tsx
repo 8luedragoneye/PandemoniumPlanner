@@ -17,16 +17,10 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [confirmed, setConfirmed] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-
-    if (overlapWarning && !confirmed) {
-      setError('Please confirm that you understand the overlap warning');
-      return;
-    }
 
     setError('');
     setLoading(true);
@@ -73,17 +67,9 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
           border: '1px solid var(--albion-gold)',
           borderRadius: '4px'
         }}>
-          <p style={{ color: 'var(--albion-gold)', marginBottom: '0.5rem' }}>
+          <p style={{ color: 'var(--albion-gold)' }}>
             {overlapWarning}
           </p>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <input
-              type="checkbox"
-              checked={confirmed}
-              onChange={(e) => setConfirmed(e.target.checked)}
-            />
-            <span>I understand and confirm</span>
-          </label>
         </div>
       )}
 
@@ -156,9 +142,9 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
           <button 
             type="submit" 
             className="btn-primary"
-            disabled={loading || (overlapWarning && !confirmed)}
+            disabled={loading}
           >
-            {loading ? 'Signing up...' : 'Confirm Sign-up'}
+            {loading ? 'Signing up...' : 'Sign Up'}
           </button>
           <button
             type="button"

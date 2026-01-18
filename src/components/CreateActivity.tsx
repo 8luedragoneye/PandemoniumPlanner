@@ -71,7 +71,7 @@ export function CreateActivity() {
         minEquip: formData.minEquip || undefined,
       });
 
-      navigate(`/activity/${activity.id}`);
+      navigate(`/activity/${activity.id}/edit`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to create activity');
     } finally {

@@ -20,7 +20,10 @@ router.get('/activity/:activityId', authenticateToken, async (req, res) => {
       },
     });
 
-    res.json(roles);
+    res.json(roles.map(role => ({
+      ...role,
+      attributes: JSON.parse(role.attributes),
+    })));
   } catch (error: unknown) {
     handleError(res, error, 'Failed to fetch roles');
   }
@@ -86,13 +89,25 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
 
     const { name, slots, attributes } = req.body;
 
+    const updateData: {
+      name?: string;
+      slots?: number;
+      attributes?: string;
+    } = {};
+
+    if (name !== undefined) {
+      updateData.name = name;
+    }
+    if (slots !== undefined) {
+      updateData.slots = parseInt(String(slots));
+    }
+    if (attributes !== undefined) {
+      updateData.attributes = JSON.stringify(attributes);
+    }
+
     const updated = await prisma.role.update({
       where: { id: req.params.id },
-      data: {
-        ...(name && { name }),
-        ...(slots !== undefined && { slots: parseInt(slots) }),
-        ...(attributes !== undefined && { attributes: JSON.stringify(attributes) }),
-      },
+      data: updateData,
     });
 
     res.json({

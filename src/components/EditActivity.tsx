@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Activity, ActivityFormData } from '../types';
+import { Activity, ActivityFormData, Role, Signup } from '../types';
 import { formatCETDate, formatDateInput, parseDateInput } from '../lib/utils';
-import { transformActivity } from '../lib/transformers';
-import { activitiesApi } from '../lib/api';
+import { transformActivity, transformRole, transformSignup } from '../lib/transformers';
+import { activitiesApi, rolesApi, signupsApi } from '../lib/api';
+import { RoleManager } from './RoleManager';
 
 export function EditActivity() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [activity, setActivity] = useState<Activity | null>(null);
+  const [activityRoles, setActivityRoles] = useState<Role[]>([]);
+  const [activitySignups, setActivitySignups] = useState<Signup[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -64,6 +67,22 @@ export function EditActivity() {
         setDateInput(activityDateStr);
         setTimeInput(activityTimeStr);
         setMassupTimeInput(massupTimeStr);
+        
+        // Fetch roles and signups for this activity
+        try {
+          const roleRecords = await rolesApi.getByActivity(id);
+          setActivityRoles(roleRecords.map(transformRole));
+        } catch (error) {
+          console.error('Error fetching roles:', error);
+        }
+        
+        try {
+          const signupRecords = await signupsApi.getByActivity(id);
+          setActivitySignups(signupRecords.map(transformSignup));
+        } catch (error) {
+          console.error('Error fetching signups:', error);
+        }
+        
         setLoading(false);
       } catch (error) {
         console.error('Error fetching activity:', error);
@@ -73,6 +92,31 @@ export function EditActivity() {
 
     fetchActivity();
   }, [id, user, navigate]);
+
+  const handleRoleUpdate = async () => {
+    console.log('handleRoleUpdate called for activity:', id);
+    if (!id) {
+      console.warn('handleRoleUpdate: No activity ID!');
+      return;
+    }
+    try {
+      console.log('Refetching roles for activity:', id);
+      const roleRecords = await rolesApi.getByActivity(id);
+      console.log('Fetched roles from API:', roleRecords);
+      const transformedRoles = roleRecords.map(transformRole);
+      console.log('Transformed roles:', transformedRoles);
+      console.log('Current activityRoles before update:', activityRoles);
+      setActivityRoles([...transformedRoles]); // Create new array reference to force update
+      console.log('Updated activityRoles state');
+      
+      const signupRecords = await signupsApi.getByActivity(id);
+      setActivitySignups(signupRecords.map(transformSignup));
+      console.log('handleRoleUpdate completed successfully');
+    } catch (error) {
+      console.error('Error refetching roles/signups:', error);
+      alert('Failed to refresh roles. Please reload the page.');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,7 +153,7 @@ export function EditActivity() {
         zone: formData.zone || undefined,
         minEquip: formData.minEquip || undefined,
       });
-      navigate(`/activity/${activity.id}`);
+      navigate('/');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to update activity');
     } finally {
@@ -605,12 +649,26 @@ export function EditActivity() {
             <button
               type="button"
               className="btn-secondary"
-              onClick={() => navigate(`/activity/${activity.id}`)}
+              onClick={() => navigate('/')}
             >
               Cancel
             </button>
           </div>
         </form>
+
+        <div style={{ 
+          marginBottom: '2rem', 
+          marginTop: '2rem', 
+          paddingTop: '2rem', 
+          borderTop: '2px solid var(--albion-border)' 
+        }}>
+          <RoleManager 
+            activityId={activity.id} 
+            roles={activityRoles} 
+            signups={activitySignups}
+            onUpdate={handleRoleUpdate}
+          />
+        </div>
       </div>
     </div>
   );
