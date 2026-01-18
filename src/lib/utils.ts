@@ -1,4 +1,5 @@
 import { formatInTimeZone } from 'date-fns-tz';
+import { de } from 'date-fns/locale';
 import { Activity, Signup } from '../types';
 import { TIMEZONE_CET, DEFAULT_ACTIVITY_DURATION_HOURS } from './constants';
 
@@ -11,11 +12,38 @@ export function formatCETDate(date: string | Date): string {
 }
 
 /**
- * Format date for display
+ * Format date for German date input (dd mm yyyy)
+ */
+export function formatDateInput(date: string | Date): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return formatInTimeZone(dateObj, TIMEZONE_CET, 'dd MM yyyy', { locale: de });
+}
+
+/**
+ * Parse German date input (dd mm yyyy, dd.mm.yyyy, or dd/mm/yyyy) to Date object in CET
+ */
+export function parseDateInput(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  // Accept spaces, dots, or slashes as separators
+  const parts = dateStr.trim().split(/[\s.\/]+/);
+  if (parts.length !== 3) return null;
+  const [day, month, year] = parts.map(Number);
+  if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+  if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900) return null;
+  
+  // Create date string in ISO format and parse it
+  // We'll create it in local time and let formatCETDate handle the conversion
+  const dateStrISO = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  const date = new Date(dateStrISO + 'T12:00:00');
+  return isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * Format date for display in German format (dd mm yyyy HH:mm Uhr)
  */
 export function formatDisplayDate(date: string | Date): string {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return formatInTimeZone(dateObj, TIMEZONE_CET, 'dd.MM.yyyy HH:mm');
+  return formatInTimeZone(dateObj, TIMEZONE_CET, 'dd MM yyyy HH:mm', { locale: de }) + ' Uhr';
 }
 
 /**

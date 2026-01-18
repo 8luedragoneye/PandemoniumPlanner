@@ -58,7 +58,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 // Create activity
 router.post('/', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const { name, date, description, zone, minIP, minFame, status } = req.body;
+    const { name, date, massupTime, description, zone, minEquip, status } = req.body;
 
     if (!name || !date || !description) {
       return handleValidationError(res, 'Name, date, and description are required');
@@ -68,10 +68,10 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
       data: {
         name,
         date: new Date(date),
+        massupTime: massupTime ? new Date(massupTime) : null,
         description,
         zone: zone || null,
-        minIP: minIP ? parseInt(minIP) : null,
-        minFame: minFame ? parseInt(minFame) : null,
+        minEquip: minEquip || null,
         status: status || 'recruiting',
         creatorId: req.userId!,
       },
@@ -107,17 +107,17 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
       return res.status(403).json({ error: 'Only the creator can update this activity' });
     }
 
-    const { name, date, description, zone, minIP, minFame, status } = req.body;
+    const { name, date, massupTime, description, zone, minEquip, status } = req.body;
 
     const updated = await prisma.activity.update({
       where: { id: req.params.id },
       data: {
         ...(name && { name }),
         ...(date && { date: new Date(date) }),
+        ...(massupTime !== undefined && { massupTime: massupTime ? new Date(massupTime) : null }),
         ...(description && { description }),
         ...(zone !== undefined && { zone: zone || null }),
-        ...(minIP !== undefined && { minIP: minIP ? parseInt(minIP) : null }),
-        ...(minFame !== undefined && { minFame: minFame ? parseInt(minFame) : null }),
+        ...(minEquip !== undefined && { minEquip: minEquip || null }),
         ...(status && { status }),
       },
       include: {

@@ -23,7 +23,7 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
         <div>
           <h2 className="card-title">{activity.name}</h2>
           <p className="text-dim" style={{ marginTop: '0.5rem' }}>
-            {formatDisplayDate(activity.date)} (CET)
+            {formatDisplayDate(activity.date)}
           </p>
         </div>
         <div>
@@ -45,14 +45,14 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
           <strong>Zone:</strong> {activity.zone}
         </p>
       )}
-      {activity.minIP && (
+      {activity.minEquip && (
         <p className="text-dim" style={{ marginBottom: '0.5rem' }}>
-          <strong>Min IP:</strong> {activity.minIP}
+          <strong>Min Equipment:</strong> {activity.minEquip}
         </p>
       )}
-      {activity.minFame && (
+      {activity.massupTime && (
         <p className="text-dim" style={{ marginBottom: '1rem' }}>
-          <strong>Min Fame:</strong> {activity.minFame.toLocaleString()}
+          <strong>Massup:</strong> {formatDisplayDate(activity.massupTime)}
         </p>
       )}
 

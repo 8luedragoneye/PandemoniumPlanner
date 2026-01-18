@@ -14,11 +14,11 @@ export interface ApiActivity {
   id: string;
   name: string;
   date: string;
+  massupTime: string | null;
   description: string;
   status: 'recruiting' | 'full' | 'running';
   zone: string | null;
-  minIP: number | null;
-  minFame: number | null;
+  minEquip: string | null; // T4, T5, T6, T7, T8, T9, T10, T11
   creatorId: string;
   createdAt: string;
   updatedAt: string;

@@ -29,11 +29,11 @@ model Activity {
   id          String   @id @default(cuid())
   name        String
   date        DateTime
+  massupTime  DateTime?
   description String
   status      String   @default("recruiting") // recruiting, full, running
   zone        String?
-  minIP       Int?
-  minFame     Int?
+  minEquip    String?  // T4, T5, T6, T7, T8, T9, T10, T11
   creatorId   String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

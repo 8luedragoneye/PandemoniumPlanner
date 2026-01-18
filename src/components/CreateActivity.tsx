@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ActivityFormData } from '../types';
-import { formatCETDate } from '../lib/utils';
+import { formatCETDate, formatDateInput, parseDateInput } from '../lib/utils';
 import { activitiesApi } from '../lib/api';
 
 export function CreateActivity() {
@@ -13,11 +13,27 @@ export function CreateActivity() {
   const [formData, setFormData] = useState<ActivityFormData>({
     name: '',
     date: '',
+    massupTime: undefined,
     description: '',
     zone: '',
-    minIP: undefined,
-    minFame: undefined,
+    minEquip: undefined,
   });
+  // Initialize with current date/time in German format
+  const now = new Date();
+  const defaultDate = formatDateInput(now);
+  const defaultTime = formatCETDate(now).split('T')[1].substring(0, 5);
+  const defaultDateTime = formatCETDate(now).replace(' ', 'T');
+  
+  const [dateInput, setDateInput] = useState<string>(defaultDate); // German format: dd mm yyyy
+  const [timeInput, setTimeInput] = useState<string>(defaultTime); // HH:mm
+  const [massupTimeInput, setMassupTimeInput] = useState<string>(''); // Just time (HH:mm)
+  
+  // Initialize formData.date with default datetime
+  useEffect(() => {
+    if (!formData.date) {
+      setFormData(prev => ({ ...prev, date: defaultDateTime }));
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,13 +43,32 @@ export function CreateActivity() {
     setLoading(true);
 
     try {
+      // Combine activity date with massup time if provided
+      let massupTime: string | undefined = undefined;
+      if (massupTimeInput && formData.date) {
+        const activityDate = new Date(formData.date);
+        const [hours, minutes] = massupTimeInput.split(':').map(Number);
+        const massupDate = new Date(activityDate);
+        massupDate.setHours(hours, minutes, 0, 0);
+        
+        // Validate that massupTime is not later than activity date
+        if (massupDate > activityDate) {
+          setError('Massup time cannot be later than activity date');
+          setLoading(false);
+          return;
+        }
+        
+        // Format as datetime-local string
+        massupTime = formatCETDate(massupDate).replace(' ', 'T');
+      }
+
       const activity = await activitiesApi.create({
         name: formData.name,
         date: formData.date,
+        massupTime: massupTime,
         description: formData.description,
         zone: formData.zone || undefined,
-        minIP: formData.minIP ? Number(formData.minIP) : undefined,
-        minFame: formData.minFame ? Number(formData.minFame) : undefined,
+        minEquip: formData.minEquip || undefined,
       });
 
       navigate(`/activity/${activity.id}`);
@@ -44,7 +79,130 @@ export function CreateActivity() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    
+    // Auto-format: convert dots/slashes to spaces, limit length
+    value = value.replace(/[.\/]/g, ' ');
+    // Remove extra spaces
+    value = value.replace(/\s+/g, ' ').trim();
+    
+    setDateInput(value);
+    
+    // Parse and convert to ISO format for backend
+    const parsedDate = parseDateInput(value);
+    if (parsedDate && timeInput) {
+      const [hours, minutes] = timeInput.split(':').map(Number);
+      parsedDate.setHours(hours, minutes, 0, 0);
+      const isoString = formatCETDate(parsedDate).replace(' ', 'T');
+      setFormData(prev => ({ ...prev, date: isoString }));
+    } else if (parsedDate) {
+      // If no time set yet, just set date part
+      const isoString = formatCETDate(parsedDate).replace(' ', 'T').split('T')[0] + 'T00:00';
+      setFormData(prev => ({ ...prev, date: isoString }));
+    }
+    
+    // Auto-set massup time if not already set
+    if (timeInput && !massupTimeInput) {
+      setMassupTimeInput(timeInput);
+    }
+  };
+
+  const setQuickDate = (daysOffset: number) => {
+    const date = new Date();
+    date.setDate(date.getDate() + daysOffset);
+    const dateStr = formatDateInput(date);
+    setDateInput(dateStr);
+    
+    // Update formData
+    if (timeInput) {
+      const [hours, minutes] = timeInput.split(':').map(Number);
+      date.setHours(hours, minutes, 0, 0);
+      const isoString = formatCETDate(date).replace(' ', 'T');
+      setFormData(prev => ({ ...prev, date: isoString }));
+    }
+  };
+
+  const setQuickTime = (time: string) => {
+    setTimeInput(time);
+    
+    // Update formData if date is set
+    if (dateInput) {
+      const parsedDate = parseDateInput(dateInput);
+      if (parsedDate) {
+        const [hours, minutes] = time.split(':').map(Number);
+        parsedDate.setHours(hours, minutes, 0, 0);
+        const isoString = formatCETDate(parsedDate).replace(' ', 'T');
+        setFormData(prev => ({ ...prev, date: isoString }));
+      }
+    }
+    
+    // Auto-set massup time if not already set
+    if (!massupTimeInput) {
+      setMassupTimeInput(time);
+    }
+  };
+
+  // Generate next 4 hours from current time in CET (rounded up)
+  const getQuickTimes = (): string[] => {
+    const now = new Date();
+    // Get current time in CET
+    const cetTimeStr = formatCETDate(now);
+    const [datePart, timePart] = cetTimeStr.split('T');
+    const [hour, minute] = timePart.split(':').map(Number);
+    
+    // Round up to next hour if we're past the hour
+    const startHour = minute > 0 ? hour + 1 : hour;
+    
+    const times: string[] = [];
+    for (let i = 0; i < 4; i++) {
+      const hour = (startHour + i) % 24;
+      times.push(`${String(hour).padStart(2, '0')}:00`);
+    }
+    return times;
+  };
+
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    
+    // Format input as user types (HH:mm)
+    // Remove any non-digit characters except colon
+    value = value.replace(/[^\d:]/g, '');
+    
+    // Auto-format: add colon after 2 digits
+    if (value.length === 2 && !value.includes(':')) {
+      value = value + ':';
+    }
+    
+    // Limit to HH:mm format (5 characters max)
+    if (value.length > 5) {
+      value = value.substring(0, 5);
+    }
+    
+    // Validate format before setting
+    const timePattern = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+    if (value === '' || timePattern.test(value) || value.length < 5) {
+      setTimeInput(value);
+      
+      // Only update formData if valid time format
+      if (timePattern.test(value) && dateInput) {
+        const parsedDate = parseDateInput(dateInput);
+        if (parsedDate) {
+          const [hours, minutes] = value.split(':').map(Number);
+          parsedDate.setHours(hours, minutes, 0, 0);
+          const isoString = formatCETDate(parsedDate).replace(' ', 'T');
+          setFormData(prev => ({ ...prev, date: isoString }));
+        }
+      }
+      
+      // Auto-set massup time if not already set and time is valid
+      if (!massupTimeInput && timePattern.test(value)) {
+        setMassupTimeInput(value);
+      }
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -52,9 +210,26 @@ export function CreateActivity() {
     }));
   };
 
-  // Get current date/time in CET for default value
-  const now = new Date();
-  const defaultDateTime = formatCETDate(now).replace(' ', 'T');
+  const handleMassupTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    
+    // Format input as user types (HH:mm)
+    // Remove any non-digit characters except colon
+    value = value.replace(/[^\d:]/g, '');
+    
+    // Auto-format: add colon after 2 digits
+    if (value.length === 2 && !value.includes(':')) {
+      value = value + ':';
+    }
+    
+    // Limit to HH:mm format (5 characters max)
+    if (value.length > 5) {
+      value = value.substring(0, 5);
+    }
+    
+    setMassupTimeInput(value);
+  };
+
 
   return (
     <div style={{ maxWidth: '800px', margin: '2rem auto', padding: '2rem' }}>
@@ -93,17 +268,132 @@ export function CreateActivity() {
               color: 'var(--albion-text)',
               fontSize: '0.9375rem'
             }}>
-              Date & Time (CET) <span style={{ color: 'var(--albion-red)' }}>*</span>
+              Datum & Zeit (CET) <span style={{ color: 'var(--albion-red)' }}>*</span>
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '0.5rem',
+                  fontSize: '0.875rem',
+                  color: 'var(--albion-text-dim)'
+                }}>
+                  Datum (dd mm yyyy)
+                </label>
+                <input
+                  type="text"
+                  name="dateInput"
+                  value={dateInput}
+                  onChange={handleDateChange}
+                  required
+                  style={{ width: '100%' }}
+                  placeholder="dd mm yyyy oder dd.mm.yyyy"
+                  pattern="\d{1,2}[\s.\/]+\d{1,2}[\s.\/]+\d{4}"
+                />
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => setQuickDate(0)}
+                    style={{
+                      padding: '0.375rem 0.75rem',
+                      fontSize: '0.8125rem',
+                      backgroundColor: 'var(--albion-darker)',
+                      border: '1px solid var(--albion-border)',
+                      borderRadius: '6px',
+                      color: 'var(--albion-text)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Heute
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuickDate(1)}
+                    style={{
+                      padding: '0.375rem 0.75rem',
+                      fontSize: '0.8125rem',
+                      backgroundColor: 'var(--albion-darker)',
+                      border: '1px solid var(--albion-border)',
+                      borderRadius: '6px',
+                      color: 'var(--albion-text)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Morgen
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '0.5rem',
+                  fontSize: '0.875rem',
+                  color: 'var(--albion-text-dim)'
+                }}>
+                  Zeit (HH:mm)
+                </label>
+                <input
+                  type="text"
+                  name="timeInput"
+                  value={timeInput}
+                  onChange={handleTimeChange}
+                  required
+                  style={{ width: '100%' }}
+                  placeholder="HH:mm"
+                  pattern="^([0-1][0-9]|2[0-3]):[0-5][0-9]$"
+                  maxLength={5}
+                />
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                  {getQuickTimes().map(time => (
+                    <button
+                      key={time}
+                      type="button"
+                      onClick={() => setQuickTime(time)}
+                      style={{
+                        padding: '0.375rem 0.75rem',
+                        fontSize: '0.8125rem',
+                        backgroundColor: 'var(--albion-darker)',
+                        border: '1px solid var(--albion-border)',
+                        borderRadius: '6px',
+                        color: 'var(--albion-text)',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {time}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--albion-text)',
+              fontSize: '0.9375rem'
+            }}>
+              Massup Zeit (CET) <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
             </label>
             <input
-              type="datetime-local"
-              name="date"
-              value={formData.date}
-              onChange={handleChange}
-              required
+              type="text"
+              name="massupTime"
+              value={massupTimeInput}
+              onChange={handleMassupTimeChange}
               style={{ width: '100%' }}
-              min={defaultDateTime}
+              placeholder="HH:mm"
+              pattern="^([0-1][0-9]|2[0-3]):[0-5][0-9]$"
+              maxLength={5}
             />
+            <p style={{ 
+              marginTop: '0.5rem', 
+              fontSize: '0.875rem', 
+              color: 'var(--albion-text-dim)' 
+            }}>
+              Auto-set to activity time when date is set. Uses the same date as the activity.
+            </p>
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
@@ -146,27 +436,6 @@ export function CreateActivity() {
             />
           </div>
 
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '0.75rem',
-              fontWeight: 600,
-              color: 'var(--albion-text)',
-              fontSize: '0.9375rem'
-            }}>
-              Minimum IP <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
-            </label>
-            <input
-              type="number"
-              name="minIP"
-              value={formData.minIP || ''}
-              onChange={handleChange}
-              style={{ width: '100%' }}
-              placeholder="e.g., 1300"
-              min="0"
-            />
-          </div>
-
           <div style={{ marginBottom: '2rem' }}>
             <label style={{ 
               display: 'block', 
@@ -175,17 +444,24 @@ export function CreateActivity() {
               color: 'var(--albion-text)',
               fontSize: '0.9375rem'
             }}>
-              Minimum Fame <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
+              Minimum Equipment <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
             </label>
-            <input
-              type="number"
-              name="minFame"
-              value={formData.minFame || ''}
+            <select
+              name="minEquip"
+              value={formData.minEquip || ''}
               onChange={handleChange}
               style={{ width: '100%' }}
-              placeholder="e.g., 1000000"
-              min="0"
-            />
+            >
+              <option value="">None</option>
+              <option value="T4">T4</option>
+              <option value="T5">T5</option>
+              <option value="T6">T6</option>
+              <option value="T7">T7</option>
+              <option value="T8">T8</option>
+              <option value="T9">T9</option>
+              <option value="T10">T10</option>
+              <option value="T11">T11</option>
+            </select>
           </div>
 
           {error && (

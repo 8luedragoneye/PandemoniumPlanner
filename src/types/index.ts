@@ -12,12 +12,12 @@ export interface Activity {
   id: string;
   name: string;
   date: string; // ISO datetime string
+  massupTime?: string | null; // ISO datetime string
   description: string;
   creator: string; // User ID (creatorId from backend)
   status: 'recruiting' | 'full' | 'running';
   zone?: string | null;
-  minIP?: number | null;
-  minFame?: number | null;
+  minEquip?: string | null; // T4, T5, T6, T7, T8, T9, T10, T11
   created: string; // createdAt
   updated: string; // updatedAt
   expand?: {
@@ -58,10 +58,10 @@ export interface Signup {
 export interface ActivityFormData {
   name: string;
   date: string;
+  massupTime?: string;
   description: string;
   zone?: string;
-  minIP?: number;
-  minFame?: number;
+  minEquip?: string; // T4, T5, T6, T7, T8, T9, T10, T11
 }
 
 export interface RoleFormData {

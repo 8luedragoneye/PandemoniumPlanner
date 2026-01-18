@@ -95,10 +95,10 @@ export const activitiesApi = {
   create: async (data: {
     name: string;
     date: string;
+    massupTime?: string;
     description: string;
     zone?: string;
-    minIP?: number;
-    minFame?: number;
+    minEquip?: string;
   }): Promise<ApiActivity> => {
     return request<ApiActivity>('/activities', {
       method: 'POST',
@@ -109,10 +109,10 @@ export const activitiesApi = {
   update: async (id: string, data: {
     name?: string;
     date?: string;
+    massupTime?: string;
     description?: string;
     zone?: string;
-    minIP?: number;
-    minFame?: number;
+    minEquip?: string;
     status?: 'recruiting' | 'full' | 'running';
   }): Promise<ApiActivity> => {
     return request<ApiActivity>(`/activities/${id}`, {

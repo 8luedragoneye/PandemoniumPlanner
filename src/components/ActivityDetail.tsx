@@ -151,7 +151,12 @@ export function ActivityDetail() {
           <div>
             <h1 className="card-title">{activity.name}</h1>
             <p className="text-dim" style={{ marginTop: '0.5rem' }}>
-              {formatDisplayDate(activity.date)} (CET)
+              {formatDisplayDate(activity.date)}
+              {activity.massupTime && (
+                <span style={{ marginLeft: '1rem' }}>
+                  • Massup: {formatDisplayDate(activity.massupTime)}
+                </span>
+              )}
             </p>
           </div>
           <div>
@@ -163,7 +168,7 @@ export function ActivityDetail() {
 
         <p style={{ marginBottom: '1rem' }}>{activity.description}</p>
 
-        {(activity.zone || activity.minIP || activity.minFame) && (
+        {(activity.zone || activity.minEquip) && (
           <div style={{ 
             marginBottom: '1rem', 
             padding: '1rem',
@@ -173,11 +178,8 @@ export function ActivityDetail() {
             {activity.zone && (
               <p><strong className="text-gold">Zone:</strong> {activity.zone}</p>
             )}
-            {activity.minIP && (
-              <p><strong className="text-gold">Min IP:</strong> {activity.minIP}</p>
-            )}
-            {activity.minFame && (
-              <p><strong className="text-gold">Min Fame:</strong> {activity.minFame.toLocaleString()}</p>
+            {activity.minEquip && (
+              <p><strong className="text-gold">Min Equipment:</strong> {activity.minEquip}</p>
             )}
           </div>
         )}
