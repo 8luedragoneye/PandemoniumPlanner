@@ -54,17 +54,50 @@ export function ActivityList() {
   }, [activities, signups, user, filter]);
 
   if (loading) {
-    return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
+    return (
+      <div style={{ 
+        padding: '4rem 2rem', 
+        textAlign: 'center',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        gap: '1rem'
+      }}>
+        <div className="loading-spinner" style={{ 
+          width: '2rem', 
+          height: '2rem',
+          borderWidth: '3px',
+          color: 'var(--albion-gold)'
+        }}></div>
+        <p className="text-dim" style={{ fontSize: '1.125rem' }}>Loading activities...</p>
+      </div>
+    );
   }
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <div className="flex-between" style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', color: 'var(--albion-gold)' }}>
-          Guild Activities
-        </h1>
-        <Link to="/create" className="btn-primary">
-          Create Activity
+      <div className="flex-between" style={{ marginBottom: '2.5rem', alignItems: 'flex-start' }}>
+        <div>
+          <h1 style={{ 
+            fontSize: '2.5rem', 
+            color: 'var(--albion-gold)',
+            fontWeight: 700,
+            letterSpacing: '-0.025em',
+            marginBottom: '0.5rem',
+            background: 'linear-gradient(135deg, var(--albion-gold) 0%, var(--albion-gold-light) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>
+            Guild Activities
+          </h1>
+          <p className="text-dim" style={{ fontSize: '1rem' }}>
+            Manage and join guild activities
+          </p>
+        </div>
+        <Link to="/create" className="btn-primary" style={{ marginTop: '0.5rem' }}>
+          + Create Activity
         </Link>
       </div>
 
@@ -75,8 +108,8 @@ export function ActivityList() {
       />
 
       {filteredActivities.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-          <p className="text-dim">No activities found.</p>
+        <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+          <p className="text-dim" style={{ fontSize: '1.125rem' }}>No activities found.</p>
         </div>
       ) : (
         <div>

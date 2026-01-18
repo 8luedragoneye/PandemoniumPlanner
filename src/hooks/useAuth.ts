@@ -46,62 +46,40 @@ export function useAuth() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  const login = async (name: string) => {
+  const login = async (name: string): Promise<{ user: User; token: string }> => {
     try {
       const data = await authApi.login(name);
-      console.log('Login response:', data);
-      if (data && data.user) {
+      if (data?.user) {
         setUser(data.user as User);
-        setAuthVersion(prev => {
-          const newVersion = prev + 1;
-          console.log('Auth version updated to:', newVersion);
-          return newVersion;
-        });
-        console.log('User state updated:', data.user);
+        setAuthVersion(prev => prev + 1);
       } else {
-        console.error('Invalid login response:', data);
         throw new Error('Invalid response from server');
       }
       return data;
     } catch (error) {
-      console.error('Login error in useAuth:', error);
       throw error;
     }
   };
 
-  const register = async (name: string) => {
+  const register = async (name: string): Promise<{ user: User; token: string }> => {
     try {
       const data = await authApi.register(name);
-      console.log('Register response:', data);
-      if (data && data.user) {
+      if (data?.user) {
         setUser(data.user as User);
-        setAuthVersion(prev => {
-          const newVersion = prev + 1;
-          console.log('Auth version updated to:', newVersion);
-          return newVersion;
-        });
-        console.log('User state updated:', data.user);
+        setAuthVersion(prev => prev + 1);
       } else {
-        console.error('Invalid register response:', data);
         throw new Error('Invalid response from server');
       }
       return data;
     } catch (error) {
-      console.error('Register error in useAuth:', error);
       throw error;
     }
   };
 
-  const logout = () => {
-    console.log('Logging out...');
+  const logout = (): void => {
     removeToken();
     setUser(null);
-    setAuthVersion(prev => {
-      const newVersion = prev + 1;
-      console.log('Auth version updated to:', newVersion);
-      return newVersion;
-    });
-    console.log('Logout complete, user set to null');
+    setAuthVersion(prev => prev + 1);
   };
 
   return {

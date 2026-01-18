@@ -115,7 +115,25 @@ export function ActivityDetail() {
   };
 
   if (loading) {
-    return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
+    return (
+      <div style={{ 
+        padding: '4rem 2rem', 
+        textAlign: 'center',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        gap: '1rem'
+      }}>
+        <div className="loading-spinner" style={{ 
+          width: '2rem', 
+          height: '2rem',
+          borderWidth: '3px',
+          color: 'var(--albion-gold)'
+        }}></div>
+        <p className="text-dim" style={{ fontSize: '1.125rem' }}>Loading activity...</p>
+      </div>
+    );
   }
 
   if (!activity) {
@@ -202,7 +220,12 @@ export function ActivityDetail() {
         )}
 
         <div style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ marginBottom: '1rem', color: 'var(--albion-gold)' }}>
+          <h2 style={{ 
+            marginBottom: '1.5rem', 
+            color: 'var(--albion-gold)',
+            fontSize: '1.5rem',
+            fontWeight: 600
+          }}>
             Sign-ups
           </h2>
           {activityRoles.length === 0 ? (
@@ -223,8 +246,9 @@ export function ActivityDetail() {
                         <button
                           className="btn-primary"
                           onClick={() => handleRoleClick(role)}
+                          style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
                         >
-                          Join
+                          + Join
                         </button>
                       )}
                     </div>
@@ -357,9 +381,9 @@ export function ActivityDetail() {
           />
         )}
 
-        <div className="flex" style={{ gap: '1rem', marginTop: '2rem' }}>
+        <div className="flex" style={{ gap: '1rem', marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid var(--albion-border)' }}>
           <Link to="/" className="btn-secondary">
-            Back to List
+            ← Back to List
           </Link>
           {isOwner && (
             <>

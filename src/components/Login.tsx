@@ -21,30 +21,56 @@ export function Login() {
       }
       
       if (isRegister) {
-        const result = await register(name.trim());
-        console.log('Register result:', result);
+        await register(name.trim());
       } else {
-        const result = await login(name.trim());
-        console.log('Login result:', result);
+        await login(name.trim());
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Auth error:', err);
-      setError(err.message || 'Authentication failed');
+      setError(err instanceof Error ? err.message : 'Authentication failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '2rem auto', padding: '2rem' }}>
-      <div className="card">
-        <h2 className="card-title" style={{ marginBottom: '1.5rem' }}>
-          {isRegister ? 'Register' : 'Login'} - Pandemonium Planner
-        </h2>
+    <div style={{ 
+      maxWidth: '450px', 
+      margin: '4rem auto', 
+      padding: '2rem',
+      minHeight: 'calc(100vh - 4rem)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      <div className="card" style={{ width: '100%' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <h1 style={{ 
+            fontSize: '2rem',
+            color: 'var(--albion-gold)',
+            fontWeight: 700,
+            marginBottom: '0.5rem',
+            background: 'linear-gradient(135deg, var(--albion-gold) 0%, var(--albion-gold-light) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>
+            Pandemonium Planner
+          </h1>
+          <h2 className="text-dim" style={{ fontSize: '1.125rem', fontWeight: 500 }}>
+            {isRegister ? 'Create Account' : 'Welcome Back'}
+          </h2>
+        </div>
         
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--albion-text)',
+              fontSize: '0.9375rem'
+            }}>
               Player Name
             </label>
             <input
@@ -61,10 +87,12 @@ export function Login() {
           {error && (
             <div style={{ 
               color: 'var(--albion-red)', 
-              marginBottom: '1rem',
-              padding: '0.5rem',
-              backgroundColor: 'rgba(192, 57, 43, 0.1)',
-              borderRadius: '4px'
+              marginBottom: '1.5rem',
+              padding: '1rem',
+              backgroundColor: 'rgba(192, 57, 43, 0.15)',
+              borderRadius: '12px',
+              border: '1px solid rgba(192, 57, 43, 0.3)',
+              fontWeight: 500
             }}>
               {error}
             </div>

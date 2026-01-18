@@ -72,8 +72,8 @@ export function EditActivity() {
         minFame: formData.minFame ? Number(formData.minFame) : undefined,
       });
       navigate(`/activity/${activity.id}`);
-    } catch (err: any) {
-      setError(err.message || 'Failed to update activity');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to update activity');
     } finally {
       setSaving(false);
     }
@@ -98,7 +98,25 @@ export function EditActivity() {
   };
 
   if (loading) {
-    return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
+    return (
+      <div style={{ 
+        padding: '4rem 2rem', 
+        textAlign: 'center',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        gap: '1rem'
+      }}>
+        <div className="loading-spinner" style={{ 
+          width: '2rem', 
+          height: '2rem',
+          borderWidth: '3px',
+          color: 'var(--albion-gold)'
+        }}></div>
+        <p className="text-dim" style={{ fontSize: '1.125rem' }}>Loading activity...</p>
+      </div>
+    );
   }
 
   if (!activity) {
@@ -112,15 +130,28 @@ export function EditActivity() {
           Edit Activity
         </h1>
 
-        <div style={{ marginBottom: '1.5rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-            Status
+        <div style={{ 
+          marginBottom: '2rem',
+          padding: '1.5rem',
+          backgroundColor: 'var(--albion-darker)',
+          borderRadius: '12px',
+          border: '1px solid var(--albion-border)'
+        }}>
+          <label style={{ 
+            display: 'block', 
+            marginBottom: '1rem',
+            fontWeight: 600,
+            color: 'var(--albion-text)',
+            fontSize: '0.9375rem'
+          }}>
+            Activity Status
           </label>
-          <div className="flex" style={{ gap: '0.5rem' }}>
+          <div className="flex" style={{ gap: '0.75rem', flexWrap: 'wrap' }}>
             <button
               type="button"
               className={activity.status === 'recruiting' ? 'btn-primary' : 'btn-secondary'}
               onClick={() => handleStatusChange('recruiting')}
+              style={{ padding: '0.625rem 1.25rem', fontSize: '0.875rem' }}
             >
               Recruiting
             </button>
@@ -128,6 +159,7 @@ export function EditActivity() {
               type="button"
               className={activity.status === 'full' ? 'btn-primary' : 'btn-secondary'}
               onClick={() => handleStatusChange('full')}
+              style={{ padding: '0.625rem 1.25rem', fontSize: '0.875rem' }}
             >
               Full
             </button>
@@ -135,6 +167,7 @@ export function EditActivity() {
               type="button"
               className={activity.status === 'running' ? 'btn-primary' : 'btn-secondary'}
               onClick={() => handleStatusChange('running')}
+              style={{ padding: '0.625rem 1.25rem', fontSize: '0.875rem' }}
             >
               Running
             </button>
@@ -142,9 +175,15 @@ export function EditActivity() {
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-              Activity Name *
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--albion-text)',
+              fontSize: '0.9375rem'
+            }}>
+              Activity Name <span style={{ color: 'var(--albion-red)' }}>*</span>
             </label>
             <input
               type="text"
@@ -156,9 +195,15 @@ export function EditActivity() {
             />
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-              Date & Time (CET) *
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--albion-text)',
+              fontSize: '0.9375rem'
+            }}>
+              Date & Time (CET) <span style={{ color: 'var(--albion-red)' }}>*</span>
             </label>
             <input
               type="datetime-local"
@@ -170,22 +215,34 @@ export function EditActivity() {
             />
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-              Description *
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--albion-text)',
+              fontSize: '0.9375rem'
+            }}>
+              Description <span style={{ color: 'var(--albion-red)' }}>*</span>
             </label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
               required
-              style={{ width: '100%', minHeight: '100px' }}
+              style={{ width: '100%', minHeight: '120px' }}
             />
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-              Zone (optional)
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--albion-text)',
+              fontSize: '0.9375rem'
+            }}>
+              Zone <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
             </label>
             <input
               type="text"
@@ -196,9 +253,15 @@ export function EditActivity() {
             />
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-              Minimum IP (optional)
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--albion-text)',
+              fontSize: '0.9375rem'
+            }}>
+              Minimum IP <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
             </label>
             <input
               type="number"
@@ -210,9 +273,15 @@ export function EditActivity() {
             />
           </div>
 
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-              Minimum Fame (optional)
+          <div style={{ marginBottom: '2rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--albion-text)',
+              fontSize: '0.9375rem'
+            }}>
+              Minimum Fame <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
             </label>
             <input
               type="number"
@@ -227,16 +296,18 @@ export function EditActivity() {
           {error && (
             <div style={{ 
               color: 'var(--albion-red)', 
-              marginBottom: '1rem',
-              padding: '0.5rem',
-              backgroundColor: 'rgba(192, 57, 43, 0.1)',
-              borderRadius: '4px'
+              marginBottom: '1.5rem',
+              padding: '1rem',
+              backgroundColor: 'rgba(192, 57, 43, 0.15)',
+              borderRadius: '12px',
+              border: '1px solid rgba(192, 57, 43, 0.3)',
+              fontWeight: 500
             }}>
               {error}
             </div>
           )}
 
-          <div className="flex" style={{ gap: '1rem' }}>
+          <div className="flex" style={{ gap: '1rem', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--albion-border)' }}>
             <button 
               type="submit" 
               className="btn-primary"

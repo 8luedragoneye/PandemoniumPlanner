@@ -39,8 +39,8 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
         comment: comment || undefined,
       });
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign up');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to sign up');
     } finally {
       setLoading(false);
     }
@@ -58,7 +58,7 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
       marginTop: '2rem',
       padding: '1.5rem',
       backgroundColor: 'var(--albion-darker)',
-      borderRadius: '8px',
+      borderRadius: '12px',
       border: '1px solid var(--albion-gold)'
     }}>
       <h3 style={{ marginBottom: '1rem', color: 'var(--albion-gold)' }}>
@@ -89,14 +89,24 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
 
       <form onSubmit={handleSubmit}>
         {Object.keys(role.attributes).length > 0 && (
-          <div style={{ marginBottom: '1rem' }}>
-            <p style={{ marginBottom: '0.5rem' }}>
-              <strong>Requirements:</strong>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <p style={{ 
+              marginBottom: '1rem',
+              fontWeight: 600,
+              color: 'var(--albion-gold)',
+              fontSize: '0.9375rem'
+            }}>
+              Requirements:
             </p>
             {Object.entries(role.attributes).map(([key, value]) => (
-              <div key={key} style={{ marginBottom: '0.75rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.25rem' }}>
-                  {key}: {String(value)} (confirm you meet this)
+              <div key={key} style={{ marginBottom: '1rem' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '0.5rem',
+                  fontWeight: 500,
+                  fontSize: '0.9375rem'
+                }}>
+                  {key}: <span className="text-gold">{String(value)}</span> <span className="text-dim">(confirm you meet this)</span>
                 </label>
                 <input
                   type="text"
@@ -110,14 +120,20 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
           </div>
         )}
 
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-            Comment (optional)
+        <div style={{ marginBottom: '1.5rem' }}>
+          <label style={{ 
+            display: 'block', 
+            marginBottom: '0.75rem',
+            fontWeight: 600,
+            color: 'var(--albion-text)',
+            fontSize: '0.9375rem'
+          }}>
+            Comment <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
           </label>
           <textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            style={{ width: '100%', minHeight: '80px' }}
+            style={{ width: '100%', minHeight: '100px' }}
             placeholder="Any additional information..."
           />
         </div>
@@ -125,16 +141,18 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
         {error && (
           <div style={{ 
             color: 'var(--albion-red)', 
-            marginBottom: '1rem',
-            padding: '0.5rem',
-            backgroundColor: 'rgba(192, 57, 43, 0.1)',
-            borderRadius: '4px'
+            marginBottom: '1.5rem',
+            padding: '1rem',
+            backgroundColor: 'rgba(192, 57, 43, 0.15)',
+            borderRadius: '12px',
+            border: '1px solid rgba(192, 57, 43, 0.3)',
+            fontWeight: 500
           }}>
             {error}
           </div>
         )}
 
-        <div className="flex" style={{ gap: '1rem' }}>
+        <div className="flex" style={{ gap: '1rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--albion-border)' }}>
           <button 
             type="submit" 
             className="btn-primary"

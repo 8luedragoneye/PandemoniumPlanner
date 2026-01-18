@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { DEFAULT_JWT_SECRET } from '../lib/constants';
 
 export interface AuthRequest extends Request {
   userId?: string;
@@ -13,13 +14,15 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
     return res.status(401).json({ error: 'Access token required' });
   }
 
-  const secret = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+  const secret = process.env.JWT_SECRET || DEFAULT_JWT_SECRET;
   
-  jwt.verify(token, secret, (err, decoded: any) => {
+  jwt.verify(token, secret, (err, decoded) => {
     if (err) {
       return res.status(403).json({ error: 'Invalid or expired token' });
     }
-    req.userId = decoded.userId;
+    if (decoded && typeof decoded === 'object' && 'userId' in decoded) {
+      req.userId = decoded.userId as string;
+    }
     next();
   });
 }

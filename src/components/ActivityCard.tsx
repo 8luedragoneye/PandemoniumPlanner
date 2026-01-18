@@ -56,14 +56,19 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
         </p>
       )}
 
-      <div style={{ marginBottom: '1rem' }}>
-        <h3 style={{ marginBottom: '0.5rem', color: 'var(--albion-gold)' }}>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <h3 style={{ 
+          marginBottom: '1rem', 
+          color: 'var(--albion-gold)',
+          fontSize: '1.25rem',
+          fontWeight: 600
+        }}>
           Roles ({totalSignups}/{totalSlots})
         </h3>
         {roles.length === 0 ? (
-          <p className="text-dim">No roles defined yet.</p>
+          <p className="text-dim" style={{ fontStyle: 'italic' }}>No roles defined yet.</p>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
             {roles.map(role => {
               const count = getSignupCount(role.id, signups);
               const full = isRoleFull(role.id, role.slots, signups);
@@ -71,22 +76,24 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
                 <div 
                   key={role.id}
                   style={{
-                    padding: '0.75rem',
+                    padding: '1rem',
                     backgroundColor: 'var(--albion-darker)',
-                    borderRadius: '4px',
-                    border: full ? '2px solid var(--albion-red)' : '1px solid var(--albion-border)'
+                    borderRadius: '12px',
+                    border: full ? '2px solid var(--albion-red)' : '1.5px solid var(--albion-border)',
+                    transition: 'all 0.2s',
+                    boxShadow: full ? '0 2px 8px rgba(192, 57, 43, 0.2)' : '0 1px 3px rgba(0, 0, 0, 0.2)'
                   }}
                 >
-                  <div className="flex-between">
-                    <strong>{role.name}</strong>
-                    <span className="text-dim">
+                  <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
+                    <strong style={{ color: full ? 'var(--albion-red)' : 'inherit' }}>{role.name}</strong>
+                    <span className="text-dim" style={{ fontWeight: 600 }}>
                       {count}/{role.slots}
                     </span>
                   </div>
                   {Object.keys(role.attributes).length > 0 && (
-                    <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                    <div style={{ marginTop: '0.75rem', fontSize: '0.8125rem', paddingTop: '0.75rem', borderTop: '1px solid var(--albion-border)' }}>
                       {Object.entries(role.attributes).map(([key, value]) => (
-                        <div key={key} className="text-dim">
+                        <div key={key} className="text-dim" style={{ marginBottom: '0.25rem' }}>
                           <strong>{key}:</strong> {String(value)}
                         </div>
                       ))}
@@ -99,8 +106,8 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
         )}
       </div>
 
-      <div className="flex-between">
-        <div>
+      <div className="flex-between" style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--albion-border)' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <Link to={`/activity/${activity.id}`} className="btn-primary">
             View Details
           </Link>
@@ -108,13 +115,12 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
             <Link 
               to={`/activity/${activity.id}/edit`} 
               className="btn-secondary"
-              style={{ marginLeft: '0.5rem' }}
             >
               Edit
             </Link>
           )}
         </div>
-        <div className="text-dim">
+        <div className="text-dim" style={{ fontSize: '0.875rem', fontWeight: 500 }}>
           Created by {activity.expand?.creator?.name || 'Unknown'}
         </div>
       </div>

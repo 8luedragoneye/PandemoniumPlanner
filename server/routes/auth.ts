@@ -3,6 +3,8 @@ import jwt from 'jsonwebtoken';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { validateName, findUserByName } from '../services/nameValidation';
 import prisma from '../lib/prisma';
+import { handleError, handleValidationError, handleNotFound } from '../lib/errorHandler';
+import { JWT_EXPIRATION, DEFAULT_JWT_SECRET } from '../lib/constants';
 
 const router = express.Router();
 
@@ -38,9 +40,9 @@ async function findOrCreateUser(name: string) {
       },
     });
     return user;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // If creation fails (e.g., duplicate), try to find again
-    if (error.code === 'P2002') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
       user = await findUserByName(name);
       if (user) {
         return user;
@@ -65,20 +67,19 @@ router.post('/register', async (req, res) => {
     // Validate name (can be swapped for external API validation)
     const isValid = await validateName(trimmedName);
     if (!isValid) {
-      return res.status(400).json({ error: 'Invalid name' });
+      return handleValidationError(res, 'Invalid name');
     }
 
     // Find or create user
     const user = await findOrCreateUser(trimmedName);
 
     // Generate token
-    const secret = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-    const token = jwt.sign({ userId: user.id }, secret, { expiresIn: '7d' });
+    const secret = process.env.JWT_SECRET || DEFAULT_JWT_SECRET;
+    const token = jwt.sign({ userId: user.id }, secret, { expiresIn: JWT_EXPIRATION });
 
     res.json({ user, token });
-  } catch (error: any) {
-    console.error('Register error:', error);
-    res.status(500).json({ error: error.message || 'Registration failed' });
+  } catch (error: unknown) {
+    handleError(res, error, 'Registration failed');
   }
 });
 
@@ -89,7 +90,7 @@ router.post('/login', async (req, res) => {
     const { name } = req.body;
 
     if (!name || !name.trim()) {
-      return res.status(400).json({ error: 'Name is required' });
+      return handleValidationError(res, 'Name is required');
     }
 
     const trimmedName = name.trim();
@@ -104,8 +105,8 @@ router.post('/login', async (req, res) => {
     const user = await findOrCreateUser(trimmedName);
 
     // Generate token
-    const secret = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-    const token = jwt.sign({ userId: user.id }, secret, { expiresIn: '7d' });
+    const secret = process.env.JWT_SECRET || DEFAULT_JWT_SECRET;
+    const token = jwt.sign({ userId: user.id }, secret, { expiresIn: JWT_EXPIRATION });
 
     res.json({
       user: {
@@ -118,9 +119,8 @@ router.post('/login', async (req, res) => {
       },
       token,
     });
-  } catch (error: any) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: error.message || 'Login failed' });
+  } catch (error: unknown) {
+    handleError(res, error, 'Login failed');
   }
 });
 
@@ -140,13 +140,12 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res) => {
     });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return handleNotFound(res, 'User');
     }
 
     res.json({ user });
-  } catch (error: any) {
-    console.error('Get user error:', error);
-    res.status(500).json({ error: error.message || 'Failed to get user' });
+  } catch (error: unknown) {
+    handleError(res, error, 'Failed to get user');
   }
 });
 

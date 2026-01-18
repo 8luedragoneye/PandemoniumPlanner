@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';
+import { handleError, handleNotFound, handleUnauthorized, handleValidationError } from '../lib/errorHandler';
 
 const router = express.Router();
 
@@ -38,9 +39,8 @@ router.get('/activity/:activityId', authenticateToken, async (req, res) => {
       ...s,
       attributes: JSON.parse(s.attributes),
     })));
-  } catch (error: any) {
-    console.error('Get signups error:', error);
-    res.status(500).json({ error: error.message || 'Failed to fetch signups' });
+  } catch (error: unknown) {
+    handleError(res, error, 'Failed to fetch signups');
   }
 });
 
@@ -50,7 +50,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     const { activityId, roleId, attributes, comment } = req.body;
 
     if (!activityId || !roleId) {
-      return res.status(400).json({ error: 'Activity ID and role ID are required' });
+      return handleValidationError(res, 'Activity ID and role ID are required');
     }
 
     // Check if already signed up
@@ -62,7 +62,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     });
 
     if (existing) {
-      return res.status(400).json({ error: 'Already signed up for this activity' });
+      return handleValidationError(res, 'Already signed up for this activity');
     }
 
     // Check role exists and has slots
@@ -74,11 +74,11 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     });
 
     if (!role) {
-      return res.status(404).json({ error: 'Role not found' });
+      return handleNotFound(res, 'Role');
     }
 
     if (role.signups.length >= role.slots) {
-      return res.status(400).json({ error: 'Role is full' });
+      return handleValidationError(res, 'Role is full');
     }
 
     const signup = await prisma.signup.create({
@@ -118,9 +118,8 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
       ...signup,
       attributes: JSON.parse(signup.attributes),
     });
-  } catch (error: any) {
-    console.error('Create signup error:', error);
-    res.status(500).json({ error: error.message || 'Failed to create signup' });
+  } catch (error: unknown) {
+    handleError(res, error, 'Failed to create signup');
   }
 });
 
@@ -135,12 +134,12 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
     });
 
     if (!signup) {
-      return res.status(404).json({ error: 'Signup not found' });
+      return handleNotFound(res, 'Signup');
     }
 
     // User can update their own signup, or activity creator can update any
     if (signup.playerId !== req.userId && signup.activity.creatorId !== req.userId) {
-      return res.status(403).json({ error: 'Not authorized to update this signup' });
+      return handleUnauthorized(res, 'Not authorized to update this signup');
     }
 
     const { attributes, comment } = req.body;
@@ -180,9 +179,8 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
       ...updated,
       attributes: JSON.parse(updated.attributes),
     });
-  } catch (error: any) {
-    console.error('Update signup error:', error);
-    res.status(500).json({ error: error.message || 'Failed to update signup' });
+  } catch (error: unknown) {
+    handleError(res, error, 'Failed to update signup');
   }
 });
 
@@ -197,12 +195,12 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
     });
 
     if (!signup) {
-      return res.status(404).json({ error: 'Signup not found' });
+      return handleNotFound(res, 'Signup');
     }
 
     // User can delete their own signup, or activity creator can delete any
     if (signup.playerId !== req.userId && signup.activity.creatorId !== req.userId) {
-      return res.status(403).json({ error: 'Not authorized to delete this signup' });
+      return handleUnauthorized(res, 'Not authorized to delete this signup');
     }
 
     await prisma.signup.delete({
@@ -210,9 +208,8 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
     });
 
     res.json({ message: 'Signup deleted' });
-  } catch (error: any) {
-    console.error('Delete signup error:', error);
-    res.status(500).json({ error: error.message || 'Failed to delete signup' });
+  } catch (error: unknown) {
+    handleError(res, error, 'Failed to delete signup');
   }
 });
 

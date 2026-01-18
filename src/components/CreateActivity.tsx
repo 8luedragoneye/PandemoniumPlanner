@@ -37,8 +37,8 @@ export function CreateActivity() {
       });
 
       navigate(`/activity/${activity.id}`);
-    } catch (err: any) {
-      setError(err.message || 'Failed to create activity');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to create activity');
     } finally {
       setLoading(false);
     }
@@ -59,14 +59,20 @@ export function CreateActivity() {
   return (
     <div style={{ maxWidth: '800px', margin: '2rem auto', padding: '2rem' }}>
       <div className="card">
-        <h1 className="card-title" style={{ marginBottom: '1.5rem' }}>
+        <h1 className="card-title" style={{ marginBottom: '2rem' }}>
           Create New Activity
         </h1>
 
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-              Activity Name *
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--albion-text)',
+              fontSize: '0.9375rem'
+            }}>
+              Activity Name <span style={{ color: 'var(--albion-red)' }}>*</span>
             </label>
             <input
               type="text"
@@ -79,9 +85,15 @@ export function CreateActivity() {
             />
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-              Date & Time (CET) *
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--albion-text)',
+              fontSize: '0.9375rem'
+            }}>
+              Date & Time (CET) <span style={{ color: 'var(--albion-red)' }}>*</span>
             </label>
             <input
               type="datetime-local"
@@ -94,23 +106,35 @@ export function CreateActivity() {
             />
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-              Description *
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--albion-text)',
+              fontSize: '0.9375rem'
+            }}>
+              Description <span style={{ color: 'var(--albion-red)' }}>*</span>
             </label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
               required
-              style={{ width: '100%', minHeight: '100px' }}
+              style={{ width: '100%', minHeight: '120px' }}
               placeholder="Describe the activity..."
             />
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-              Zone (optional)
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--albion-text)',
+              fontSize: '0.9375rem'
+            }}>
+              Zone <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
             </label>
             <input
               type="text"
@@ -122,9 +146,15 @@ export function CreateActivity() {
             />
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-              Minimum IP (optional)
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--albion-text)',
+              fontSize: '0.9375rem'
+            }}>
+              Minimum IP <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
             </label>
             <input
               type="number"
@@ -137,9 +167,15 @@ export function CreateActivity() {
             />
           </div>
 
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-              Minimum Fame (optional)
+          <div style={{ marginBottom: '2rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--albion-text)',
+              fontSize: '0.9375rem'
+            }}>
+              Minimum Fame <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
             </label>
             <input
               type="number"
@@ -155,16 +191,18 @@ export function CreateActivity() {
           {error && (
             <div style={{ 
               color: 'var(--albion-red)', 
-              marginBottom: '1rem',
-              padding: '0.5rem',
-              backgroundColor: 'rgba(192, 57, 43, 0.1)',
-              borderRadius: '4px'
+              marginBottom: '1.5rem',
+              padding: '1rem',
+              backgroundColor: 'rgba(192, 57, 43, 0.15)',
+              borderRadius: '12px',
+              border: '1px solid rgba(192, 57, 43, 0.3)',
+              fontWeight: 500
             }}>
               {error}
             </div>
           )}
 
-          <div className="flex" style={{ gap: '1rem' }}>
+          <div className="flex" style={{ gap: '1rem', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--albion-border)' }}>
             <button 
               type="submit" 
               className="btn-primary"

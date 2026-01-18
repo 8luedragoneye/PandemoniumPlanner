@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';
+import { handleError, handleNotFound, handleUnauthorized, handleValidationError } from '../lib/errorHandler';
 
 const router = express.Router();
 
@@ -20,9 +21,8 @@ router.get('/activity/:activityId', authenticateToken, async (req, res) => {
     });
 
     res.json(roles);
-  } catch (error: any) {
-    console.error('Get roles error:', error);
-    res.status(500).json({ error: error.message || 'Failed to fetch roles' });
+  } catch (error: unknown) {
+    handleError(res, error, 'Failed to fetch roles');
   }
 });
 
@@ -32,7 +32,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     const { activityId, name, slots, attributes } = req.body;
 
     if (!activityId || !name || !slots) {
-      return res.status(400).json({ error: 'Activity ID, name, and slots are required' });
+      return handleValidationError(res, 'Activity ID, name, and slots are required');
     }
 
     // Verify user is the activity creator
@@ -41,11 +41,11 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     });
 
     if (!activity) {
-      return res.status(404).json({ error: 'Activity not found' });
+      return handleNotFound(res, 'Activity');
     }
 
     if (activity.creatorId !== req.userId) {
-      return res.status(403).json({ error: 'Only the activity creator can create roles' });
+      return handleUnauthorized(res, 'Only the activity creator can create roles');
     }
 
     const role = await prisma.role.create({
@@ -61,9 +61,8 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
       ...role,
       attributes: JSON.parse(role.attributes),
     });
-  } catch (error: any) {
-    console.error('Create role error:', error);
-    res.status(500).json({ error: error.message || 'Failed to create role' });
+  } catch (error: unknown) {
+    handleError(res, error, 'Failed to create role');
   }
 });
 
@@ -78,11 +77,11 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
     });
 
     if (!role) {
-      return res.status(404).json({ error: 'Role not found' });
+      return handleNotFound(res, 'Role');
     }
 
     if (role.activity.creatorId !== req.userId) {
-      return res.status(403).json({ error: 'Only the activity creator can update roles' });
+      return handleUnauthorized(res, 'Only the activity creator can update roles');
     }
 
     const { name, slots, attributes } = req.body;
@@ -100,9 +99,8 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
       ...updated,
       attributes: JSON.parse(updated.attributes),
     });
-  } catch (error: any) {
-    console.error('Update role error:', error);
-    res.status(500).json({ error: error.message || 'Failed to update role' });
+  } catch (error: unknown) {
+    handleError(res, error, 'Failed to update role');
   }
 });
 
@@ -117,11 +115,11 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
     });
 
     if (!role) {
-      return res.status(404).json({ error: 'Role not found' });
+      return handleNotFound(res, 'Role');
     }
 
     if (role.activity.creatorId !== req.userId) {
-      return res.status(403).json({ error: 'Only the activity creator can delete roles' });
+      return handleUnauthorized(res, 'Only the activity creator can delete roles');
     }
 
     await prisma.role.delete({
@@ -129,9 +127,8 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
     });
 
     res.json({ message: 'Role deleted' });
-  } catch (error: any) {
-    console.error('Delete role error:', error);
-    res.status(500).json({ error: error.message || 'Failed to delete role' });
+  } catch (error: unknown) {
+    handleError(res, error, 'Failed to delete role');
   }
 });
 

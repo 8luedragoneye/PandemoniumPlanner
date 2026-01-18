@@ -7,12 +7,25 @@ interface FilterButtonsProps {
 
 export function FilterButtons({ currentFilter, filters, onFilterChange }: FilterButtonsProps) {
   return (
-    <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+    <div style={{ 
+      marginBottom: '2rem', 
+      display: 'flex', 
+      gap: '0.75rem', 
+      flexWrap: 'wrap',
+      padding: '0.5rem',
+      backgroundColor: 'var(--albion-darker)',
+      borderRadius: '12px',
+      border: '1px solid var(--albion-border)'
+    }}>
       {filters.map(filter => (
         <button
           key={filter.value}
           className={currentFilter === filter.value ? 'btn-primary' : 'btn-secondary'}
           onClick={() => onFilterChange(filter.value)}
+          style={{
+            padding: '0.625rem 1.25rem',
+            fontSize: '0.875rem'
+          }}
         >
           {filter.label}
         </button>

@@ -7,6 +7,7 @@ interface RoleManagerProps {
   activityId: string;
   roles: Role[];
   signups: Signup[];
+  onUpdate?: () => void;
 }
 
 export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManagerProps) {
@@ -15,7 +16,7 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
   const [formData, setFormData] = useState({
     name: '',
     slots: 1,
-    attributes: {} as Record<string, any>,
+    attributes: {} as Record<string, unknown>,
   });
   const [newAttributeKey, setNewAttributeKey] = useState('');
   const [newAttributeValue, setNewAttributeValue] = useState('');
@@ -70,8 +71,8 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
       setEditingRole(null);
       setFormData({ name: '', slots: 1, attributes: {} });
       if (onUpdate) onUpdate();
-    } catch (err: any) {
-      setError(err.message || 'Failed to save role');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to save role');
     } finally {
       setLoading(false);
     }
@@ -93,15 +94,21 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
     try {
       await rolesApi.delete(role.id);
       if (onUpdate) onUpdate();
-    } catch (err: any) {
-      alert('Failed to delete role');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to delete role');
     }
   };
 
   return (
     <div>
-      <div className="flex-between" style={{ marginBottom: '1rem' }}>
-        <h2 style={{ color: 'var(--albion-gold)' }}>Manage Roles</h2>
+      <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
+        <h2 style={{ 
+          color: 'var(--albion-gold)',
+          fontSize: '1.5rem',
+          fontWeight: 600
+        }}>
+          Manage Roles
+        </h2>
         <button
           className="btn-primary"
           onClick={() => {
@@ -110,7 +117,7 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
             setShowForm(true);
           }}
         >
-          Add Role
+          + Add Role
         </button>
       </div>
 
@@ -118,16 +125,22 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
         <div style={{
           padding: '1.5rem',
           backgroundColor: 'var(--albion-darker)',
-          borderRadius: '8px',
+          borderRadius: '12px',
           marginBottom: '1rem'
         }}>
           <h3 style={{ marginBottom: '1rem' }}>
             {editingRole ? 'Edit Role' : 'New Role'}
           </h3>
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-                Role Name *
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '0.75rem',
+                fontWeight: 600,
+                color: 'var(--albion-text)',
+                fontSize: '0.9375rem'
+              }}>
+                Role Name <span style={{ color: 'var(--albion-red)' }}>*</span>
               </label>
               <input
                 type="text"
@@ -139,9 +152,15 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
               />
             </div>
 
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-                Slots *
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '0.75rem',
+                fontWeight: 600,
+                color: 'var(--albion-text)',
+                fontSize: '0.9375rem'
+              }}>
+                Slots <span style={{ color: 'var(--albion-red)' }}>*</span>
               </label>
               <input
                 type="number"
@@ -153,8 +172,14 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
               />
             </div>
 
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem' }}>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '0.75rem',
+                fontWeight: 600,
+                color: 'var(--albion-text)',
+                fontSize: '0.9375rem'
+              }}>
                 Attributes (Requirements)
               </label>
               <div className="flex" style={{ gap: '0.5rem', marginBottom: '0.5rem' }}>
@@ -217,16 +242,18 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
             {error && (
               <div style={{ 
                 color: 'var(--albion-red)', 
-                marginBottom: '1rem',
-                padding: '0.5rem',
-                backgroundColor: 'rgba(192, 57, 43, 0.1)',
-                borderRadius: '4px'
+                marginBottom: '1.5rem',
+                padding: '1rem',
+                backgroundColor: 'rgba(192, 57, 43, 0.15)',
+                borderRadius: '12px',
+                border: '1px solid rgba(192, 57, 43, 0.3)',
+                fontWeight: 500
               }}>
                 {error}
               </div>
             )}
 
-            <div className="flex" style={{ gap: '1rem' }}>
+            <div className="flex" style={{ gap: '1rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--albion-border)' }}>
               <button type="submit" className="btn-primary" disabled={loading}>
                 {loading ? 'Saving...' : (editingRole ? 'Update' : 'Create')}
               </button>

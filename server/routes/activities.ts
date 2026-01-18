@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';
+import { handleError, handleNotFound, handleUnauthorized, handleValidationError } from '../lib/errorHandler';
 
 const router = express.Router();
 
@@ -23,9 +24,8 @@ router.get('/', authenticateToken, async (req, res) => {
     });
 
     res.json(activities);
-  } catch (error: any) {
-    console.error('Get activities error:', error);
-    res.status(500).json({ error: error.message || 'Failed to fetch activities' });
+  } catch (error: unknown) {
+    handleError(res, error, 'Failed to fetch activities');
   }
 });
 
@@ -46,13 +46,12 @@ router.get('/:id', authenticateToken, async (req, res) => {
     });
 
     if (!activity) {
-      return res.status(404).json({ error: 'Activity not found' });
+      return handleNotFound(res, 'Activity');
     }
 
     res.json(activity);
-  } catch (error: any) {
-    console.error('Get activity error:', error);
-    res.status(500).json({ error: error.message || 'Failed to fetch activity' });
+  } catch (error: unknown) {
+    handleError(res, error, 'Failed to fetch activity');
   }
 });
 
@@ -62,7 +61,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     const { name, date, description, zone, minIP, minFame, status } = req.body;
 
     if (!name || !date || !description) {
-      return res.status(400).json({ error: 'Name, date, and description are required' });
+      return handleValidationError(res, 'Name, date, and description are required');
     }
 
     const activity = await prisma.activity.create({
@@ -88,9 +87,8 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     });
 
     res.status(201).json(activity);
-  } catch (error: any) {
-    console.error('Create activity error:', error);
-    res.status(500).json({ error: error.message || 'Failed to create activity' });
+  } catch (error: unknown) {
+    handleError(res, error, 'Failed to create activity');
   }
 });
 
@@ -134,9 +132,8 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
     });
 
     res.json(updated);
-  } catch (error: any) {
-    console.error('Update activity error:', error);
-    res.status(500).json({ error: error.message || 'Failed to update activity' });
+  } catch (error: unknown) {
+    handleError(res, error, 'Failed to update activity');
   }
 });
 
@@ -160,9 +157,8 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
     });
 
     res.json({ message: 'Activity deleted' });
-  } catch (error: any) {
-    console.error('Delete activity error:', error);
-    res.status(500).json({ error: error.message || 'Failed to delete activity' });
+  } catch (error: unknown) {
+    handleError(res, error, 'Failed to delete activity');
   }
 });
 

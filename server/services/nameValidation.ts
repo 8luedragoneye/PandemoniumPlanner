@@ -18,9 +18,7 @@
  * }
  */
 
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../lib/prisma';
 
 /**
  * Validates a player name
@@ -61,9 +59,9 @@ export async function findUserByName(name: string) {
       return await prisma.user.findUnique({
         where: { name: name.trim() },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If findUnique fails (constraint not applied), fall back to findFirst
-      if (error.message?.includes('needs at least one of')) {
+      if (error instanceof Error && error.message?.includes('needs at least one of')) {
         return await prisma.user.findFirst({
           where: { name: name.trim() },
         });

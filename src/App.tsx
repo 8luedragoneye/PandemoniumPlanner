@@ -11,7 +11,26 @@ function App() {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
-    return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
+    return (
+      <div style={{ 
+        padding: '4rem 2rem', 
+        textAlign: 'center',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        gap: '1rem'
+      }}>
+        <div className="loading-spinner" style={{ 
+          width: '2rem', 
+          height: '2rem',
+          borderWidth: '3px',
+          color: 'var(--albion-gold)'
+        }}></div>
+        <p className="text-dim" style={{ fontSize: '1.125rem' }}>Loading...</p>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
