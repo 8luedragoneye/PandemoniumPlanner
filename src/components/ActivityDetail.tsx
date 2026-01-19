@@ -7,6 +7,7 @@ import { formatDisplayDate, isRoleFull, checkOverlap, isUpcoming } from '../lib/
 import { transformActivity, transformRole, transformSignup } from '../lib/transformers';
 import { RoleManager } from './RoleManager';
 import { SignupForm } from './SignupForm';
+import { TransportPairManager } from './TransportPairManager';
 import { activitiesApi, signupsApi, rolesApi } from '../lib/api';
 
 export function ActivityDetail() {
@@ -91,13 +92,31 @@ export function ActivityDetail() {
     }
   };
 
-  const handleRoleClick = (role: Role) => {
+  const handleRoleClick = async (role: Role) => {
     if (isRoleFull(role.id, role.slots, activitySignups)) {
       alert('This role is full');
       return;
     }
-    setSelectedRole(role);
-    setShowSignupForm(true);
+    
+    // For transport activities, show form. For regular, join directly
+    if (isTransport) {
+      setSelectedRole(role);
+      setShowSignupForm(true);
+    } else {
+      // Regular activity - join directly
+      if (!user) return;
+      try {
+        await signupsApi.create({
+          activityId: activity.id,
+          roleId: role.id,
+          attributes: {},
+          comment: undefined,
+        });
+        handleSignupSuccess();
+      } catch (err: unknown) {
+        alert(err instanceof Error ? err.message : 'Failed to sign up');
+      }
+    }
   };
 
   const handleSignupSuccess = async () => {
@@ -143,13 +162,29 @@ export function ActivityDetail() {
   const isOwner = user?.id === activity.creator;
   const userSignup = activitySignups.find(s => s.player === user?.id);
   const canSignup = isUpcoming(activity) && activity.status === 'recruiting' && !userSignup;
+  const isTransport = activity.type === 'transport';
 
   return (
     <div style={{ maxWidth: '1000px', margin: '2rem auto', padding: '2rem' }}>
       <div className="card">
         <div className="card-header">
           <div>
-            <h1 className="card-title">{activity.name}</h1>
+            <h1 className="card-title">
+              {activity.name}
+              {isTransport && (
+                <span style={{
+                  marginLeft: '0.5rem',
+                  padding: '0.25rem 0.5rem',
+                  backgroundColor: 'var(--albion-gold)',
+                  color: 'var(--albion-dark)',
+                  borderRadius: '4px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600
+                }}>
+                  TRANSPORT
+                </span>
+              )}
+            </h1>
             <p className="text-dim" style={{ marginTop: '0.5rem' }}>
               {formatDisplayDate(activity.date)}
               {activity.massupTime && (
@@ -203,12 +238,33 @@ export function ActivityDetail() {
               activityId={activity.id} 
               roles={activityRoles} 
               signups={activitySignups}
+              activityType={activity.type}
               onUpdate={async () => {
                 // Refetch roles and signups
                 try {
                   const roleRecords = await rolesApi.getByActivity(activity.id);
                   setActivityRoles(roleRecords.map(transformRole));
                   
+                  const signupRecords = await signupsApi.getByActivity(activity.id);
+                  setActivitySignups(signupRecords.map(transformSignup));
+                  refetch();
+                } catch (error) {
+                  console.error('Error refetching:', error);
+                  refetch();
+                }
+              }}
+            />
+          </div>
+        )}
+
+        {isOwner && isTransport && (
+          <div style={{ marginBottom: '1.5rem' }}>
+            <TransportPairManager
+              activityId={activity.id}
+              signups={activitySignups}
+              onUpdate={async () => {
+                // Refetch signups to update pair status
+                try {
                   const signupRecords = await signupsApi.getByActivity(activity.id);
                   setActivitySignups(signupRecords.map(transformSignup));
                   refetch();
@@ -276,6 +332,9 @@ export function ActivityDetail() {
                       <div>
                         {roleSignups.map(signup => {
                           const isOwnSignup = signup.player === user?.id;
+                          const transportAttrs = isTransport && signup.attributes && typeof signup.attributes === 'object' 
+                            ? (signup.attributes as any) 
+                            : null;
                           return (
                             <div 
                               key={signup.id}
@@ -288,14 +347,63 @@ export function ActivityDetail() {
                               }}
                             >
                               <div className="flex-between">
-                                <div>
-                                  <strong>{signup.expand?.player?.name || 'Unknown'}</strong>
-                                  {signup.comment && (
+                                <div style={{ flex: 1 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <strong>{signup.expand?.player?.name || 'Unknown'}</strong>
+                                    {isTransport && transportAttrs?.role && (
+                                      <span style={{
+                                        padding: '0.125rem 0.5rem',
+                                        backgroundColor: transportAttrs.role === 'Fighter' 
+                                          ? 'rgba(192, 57, 43, 0.2)' 
+                                          : 'rgba(52, 152, 219, 0.2)',
+                                        borderRadius: '4px',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 600
+                                      }}>
+                                        {transportAttrs.role}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {isTransport && transportAttrs && (
+                                    <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                                      {transportAttrs.weaponType && (
+                                        <div className="text-dim">
+                                          <strong>Weapon:</strong> {transportAttrs.weaponType}
+                                        </div>
+                                      )}
+                                      {transportAttrs.source && (
+                                        <div className="text-dim" style={{ marginTop: '0.25rem' }}>
+                                          <strong>Source:</strong> {transportAttrs.source}
+                                        </div>
+                                      )}
+                                      {transportAttrs.target && (
+                                        <div className="text-dim" style={{ marginTop: '0.25rem' }}>
+                                          <strong>Target:</strong> {transportAttrs.target}
+                                        </div>
+                                      )}
+                                      {transportAttrs.preferredPartner && (
+                                        <div className="text-gold" style={{ marginTop: '0.25rem' }}>
+                                          <strong>Prefers:</strong> {transportAttrs.preferredPartner}
+                                        </div>
+                                      )}
+                                      {transportAttrs.gearNeeds && (
+                                        <div className="text-dim" style={{ marginTop: '0.25rem' }}>
+                                          <strong>Gear Needs:</strong> {transportAttrs.gearNeeds}
+                                        </div>
+                                      )}
+                                      {transportAttrs.returnTransport && (
+                                        <div className="text-dim" style={{ marginTop: '0.25rem' }}>
+                                          <strong>Return:</strong> {transportAttrs.returnTransport.slots} slots, {transportAttrs.returnTransport.weight}t
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                  {!isTransport && signup.comment && (
                                     <p className="text-dim" style={{ marginTop: '0.25rem' }}>
                                       {signup.comment}
                                     </p>
                                   )}
-                                  {Object.keys(signup.attributes).length > 0 && (
+                                  {!isTransport && Object.keys(signup.attributes).length > 0 && (
                                     <div style={{ marginTop: '0.25rem', fontSize: '0.875rem' }}>
                                       {Object.entries(signup.attributes).map(([key, value]) => (
                                         <span key={key} className="text-dim" style={{ marginRight: '1rem' }}>
@@ -303,6 +411,11 @@ export function ActivityDetail() {
                                         </span>
                                       ))}
                                     </div>
+                                  )}
+                                  {isTransport && signup.comment && (
+                                    <p className="text-dim" style={{ marginTop: '0.25rem' }}>
+                                      {signup.comment}
+                                    </p>
                                   )}
                                 </div>
                                 <div>

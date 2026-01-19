@@ -32,6 +32,7 @@ model Activity {
   massupTime  DateTime?
   description String
   status      String   @default("recruiting") // recruiting, full, running
+  type        String   @default("regular") // regular, transport
   zone        String?
   minEquip    String?  // T4, T5, T6, T7, T8, T9, T10, T11
   creatorId   String
@@ -41,6 +42,7 @@ model Activity {
   creator User @relation("ActivityCreator", fields: [creatorId], references: [id], onDelete: Cascade)
   roles   Role[]
   signups Signup[]
+  pairs   TransportPair[]
 
   @@map("activities")
 }
@@ -73,6 +75,25 @@ model Signup {
   activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
   role     Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
   player   User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  fighterPairs TransportPair[] @relation("FighterPair")
+  transporterPairs TransportPair[] @relation("TransporterPair")
 
   @@map("signups")
+}
+
+model TransportPair {
+  id            String   @id @default(cuid())
+  activityId    String
+  fighterId     String   // Signup ID
+  transporterId String   // Signup ID
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  activity    Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  fighter     Signup   @relation("FighterPair", fields: [fighterId], references: [id], onDelete: Cascade)
+  transporter Signup   @relation("TransporterPair", fields: [transporterId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, fighterId])
+  @@unique([activityId, transporterId])
+  @@map("transport_pairs")
 }

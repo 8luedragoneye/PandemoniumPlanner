@@ -70,6 +70,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
       where: { id: roleId },
       include: {
         signups: true,
+        activity: true,
       },
     });
 
@@ -79,6 +80,18 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
 
     if (role.signups.length >= role.slots) {
       return handleValidationError(res, 'Role is full');
+    }
+
+    // Validate transport-specific attributes if activity is transport type
+    if (role.activity.type === 'transport') {
+      const transportAttrs = attributes || {};
+      if (!transportAttrs.role || !['Fighter', 'Transporter'].includes(transportAttrs.role)) {
+        return handleValidationError(res, 'Transport signups must specify role as "Fighter" or "Transporter"');
+      }
+      if (!transportAttrs.source || !transportAttrs.target) {
+        return handleValidationError(res, 'Transport signups must specify source and target');
+      }
+      // Weapon type is no longer required for Fighters
     }
 
     const signup = await prisma.signup.create({

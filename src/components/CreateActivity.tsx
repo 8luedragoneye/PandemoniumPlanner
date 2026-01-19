@@ -18,6 +18,7 @@ export function CreateActivity() {
     zone: '',
     minEquip: undefined,
   });
+  const [activityType, setActivityType] = useState<'regular' | 'transport'>('regular');
   // Initialize with current date/time in German format
   const now = new Date();
   const defaultDate = formatDateInput(now);
@@ -69,6 +70,7 @@ export function CreateActivity() {
         description: formData.description,
         zone: formData.zone || undefined,
         minEquip: formData.minEquip || undefined,
+        type: activityType,
       });
 
       navigate(`/activity/${activity.id}/edit`);
@@ -237,6 +239,38 @@ export function CreateActivity() {
         </h1>
 
         <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--albion-text)',
+              fontSize: '0.9375rem'
+            }}>
+              Activity Type <span style={{ color: 'var(--albion-red)' }}>*</span>
+            </label>
+            <select
+              value={activityType}
+              onChange={(e) => setActivityType(e.target.value as 'regular' | 'transport')}
+              style={{ width: '100%', marginBottom: '1.5rem' }}
+            >
+              <option value="regular">Regular Activity</option>
+              <option value="transport">Transport Activity</option>
+            </select>
+            {activityType === 'transport' && (
+              <div style={{
+                marginBottom: '1rem',
+                padding: '1rem',
+                backgroundColor: 'rgba(212, 175, 55, 0.1)',
+                border: '1px solid var(--albion-gold)',
+                borderRadius: '4px',
+                fontSize: '0.875rem'
+              }}>
+                <strong className="text-gold">Transport Activity:</strong> This activity will use the transport pairing system. Participants will need to provide source, target, and other transport-specific information when signing up.
+              </div>
+            )}
+          </div>
+
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ 
               display: 'block', 

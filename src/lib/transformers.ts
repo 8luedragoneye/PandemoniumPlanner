@@ -1,6 +1,6 @@
 // Transform API responses to frontend types
-import type { Activity, Role, Signup, User } from '../types';
-import type { ApiActivity, ApiRole, ApiSignup, ApiUser } from './apiTypes';
+import type { Activity, Role, Signup, User, TransportPair } from '../types';
+import type { ApiActivity, ApiRole, ApiSignup, ApiUser, ApiTransportPair } from './apiTypes';
 
 export function transformUser(apiUser: ApiUser): User {
   return {
@@ -22,6 +22,7 @@ export function transformActivity(apiActivity: ApiActivity): Activity {
     description: apiActivity.description,
     creator: apiActivity.creatorId,
     status: apiActivity.status,
+    type: (apiActivity.type === 'transport' || apiActivity.type === 'regular') ? apiActivity.type : undefined,
     zone: apiActivity.zone ?? undefined,
     minEquip: apiActivity.minEquip ?? undefined,
     created: apiActivity.createdAt,
@@ -84,6 +85,63 @@ export function transformSignup(apiSignup: ApiSignup): Signup {
         updated: '',
       } : undefined,
       player: apiSignup.player ? transformUser(apiSignup.player) : undefined,
+    },
+  };
+}
+
+export function transformPair(apiPair: ApiTransportPair): TransportPair {
+  return {
+    id: apiPair.id,
+    activity: apiPair.activityId,
+    fighter: apiPair.fighterId,
+    transporter: apiPair.transporterId,
+    created: apiPair.createdAt,
+    updated: apiPair.updatedAt,
+    expand: {
+      fighter: apiPair.fighter ? {
+        id: apiPair.fighter.id,
+        activity: apiPair.activityId,
+        role: apiPair.fighter.role?.id || '',
+        player: apiPair.fighter.player?.id || '',
+        attributes: apiPair.fighter.attributes,
+        comment: undefined,
+        created: '',
+        updated: '',
+        expand: {
+          player: apiPair.fighter.player ? transformUser(apiPair.fighter.player) : undefined,
+          role: apiPair.fighter.role ? {
+            id: apiPair.fighter.role.id,
+            activity: apiPair.activityId,
+            name: apiPair.fighter.role.name,
+            slots: 0,
+            attributes: {},
+            created: '',
+            updated: '',
+          } : undefined,
+        },
+      } : undefined,
+      transporter: apiPair.transporter ? {
+        id: apiPair.transporter.id,
+        activity: apiPair.activityId,
+        role: apiPair.transporter.role?.id || '',
+        player: apiPair.transporter.player?.id || '',
+        attributes: apiPair.transporter.attributes,
+        comment: undefined,
+        created: '',
+        updated: '',
+        expand: {
+          player: apiPair.transporter.player ? transformUser(apiPair.transporter.player) : undefined,
+          role: apiPair.transporter.role ? {
+            id: apiPair.transporter.role.id,
+            activity: apiPair.activityId,
+            name: apiPair.transporter.role.name,
+            slots: 0,
+            attributes: {},
+            created: '',
+            updated: '',
+          } : undefined,
+        },
+      } : undefined,
     },
   };
 }

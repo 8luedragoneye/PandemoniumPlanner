@@ -1,4 +1,4 @@
-import type { ApiActivity, ApiRole, ApiSignup, ApiUser, AuthResponse, ApiError } from './apiTypes';
+import type { ApiActivity, ApiRole, ApiSignup, ApiUser, AuthResponse, ApiError, ApiTransportPair } from './apiTypes';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -99,6 +99,7 @@ export const activitiesApi = {
     description: string;
     zone?: string;
     minEquip?: string;
+    type?: 'regular' | 'transport';
   }): Promise<ApiActivity> => {
     return request<ApiActivity>('/activities', {
       method: 'POST',
@@ -114,6 +115,7 @@ export const activitiesApi = {
     zone?: string;
     minEquip?: string;
     status?: 'recruiting' | 'full' | 'running';
+    type?: 'regular' | 'transport';
   }): Promise<ApiActivity> => {
     return request<ApiActivity>(`/activities/${id}`, {
       method: 'PUT',
@@ -194,6 +196,40 @@ export const signupsApi = {
 
   delete: async (id: string): Promise<{ message: string }> => {
     return request<{ message: string }>(`/signups/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// Pairs API
+export const pairsApi = {
+  getByActivity: async (activityId: string): Promise<ApiTransportPair[]> => {
+    return request<ApiTransportPair[]>(`/pairs/activity/${activityId}`);
+  },
+
+  create: async (data: {
+    activityId: string;
+    fighterId: string;
+    transporterId: string;
+  }): Promise<ApiTransportPair> => {
+    return request<ApiTransportPair>('/pairs', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  update: async (id: string, data: {
+    fighterId?: string;
+    transporterId?: string;
+  }): Promise<ApiTransportPair> => {
+    return request<ApiTransportPair>(`/pairs/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  delete: async (id: string): Promise<{ message: string }> => {
+    return request<{ message: string }>(`/pairs/${id}`, {
       method: 'DELETE',
     });
   },

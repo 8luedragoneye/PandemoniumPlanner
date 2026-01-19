@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useActivities } from '../hooks/useActivities';
 import { signupsApi } from '../lib/api';
 import { transformSignup } from '../lib/transformers';
+import { SignupForm } from './SignupForm';
 
 interface ActivityCardProps {
   activity: Activity;
@@ -46,6 +47,9 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
     return '';
   })();
 
+  const [showSignupForm, setShowSignupForm] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+
   const handleRoleClick = async (role: Role) => {
     if (!user) return;
     if (isRoleFull(role.id, role.slots, activitySignups)) {
@@ -53,16 +57,23 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
       return;
     }
     
-    try {
-      await signupsApi.create({
-        activityId: activity.id,
-        roleId: role.id,
-        attributes: {},
-        comment: undefined,
-      });
-      handleSignupSuccess();
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Failed to sign up');
+    // For transport activities, show form. For regular, join directly
+    if (activity.type === 'transport') {
+      setSelectedRole(role);
+      setShowSignupForm(true);
+    } else {
+      // Regular activity - join directly
+      try {
+        await signupsApi.create({
+          activityId: activity.id,
+          roleId: role.id,
+          attributes: {},
+          comment: undefined,
+        });
+        handleSignupSuccess();
+      } catch (err: unknown) {
+        alert(err instanceof Error ? err.message : 'Failed to sign up');
+      }
     }
   };
 
@@ -82,7 +93,22 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
     <div className="card">
       <div className="card-header">
         <div>
-          <h2 className="card-title">{activity.name}</h2>
+          <h2 className="card-title">
+            {activity.name}
+            {activity.type === 'transport' && (
+              <span style={{
+                marginLeft: '0.5rem',
+                padding: '0.25rem 0.5rem',
+                backgroundColor: 'var(--albion-gold)',
+                color: 'var(--albion-dark)',
+                borderRadius: '4px',
+                fontSize: '0.75rem',
+                fontWeight: 600
+              }}>
+                TRANSPORT
+              </span>
+            )}
+          </h2>
           <p className="text-dim" style={{ marginTop: '0.5rem' }}>
             {formatDisplayDate(activity.date)}
           </p>
@@ -247,7 +273,67 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
                                     {signup.comment}
                                   </p>
                                 )}
-                                {Object.keys(signup.attributes).length > 0 && (
+                                {activity.type === 'transport' && Object.keys(signup.attributes).length > 0 && (
+                                  <div style={{ marginTop: '0.25rem', fontSize: '0.8125rem' }}>
+                                    {(() => {
+                                      const attrs = signup.attributes as any;
+                                      return (
+                                        <>
+                                          {attrs.role && (
+                                            <div className="text-dim" style={{ marginBottom: '0.25rem' }}>
+                                              <strong>Role:</strong> {attrs.role}
+                                            </div>
+                                          )}
+                                          {attrs.source && (
+                                            <div className="text-dim" style={{ marginBottom: '0.25rem' }}>
+                                              <strong>Origin:</strong> {attrs.source}
+                                            </div>
+                                          )}
+                                          {attrs.target && (
+                                            <div className="text-dim" style={{ marginBottom: '0.25rem' }}>
+                                              <strong>Goal:</strong> {attrs.target}
+                                            </div>
+                                          )}
+                                          {(attrs.slots || attrs.gewicht) && (
+                                            <div className="text-dim" style={{ marginBottom: '0.25rem' }}>
+                                              {attrs.slots && <span>Slots: {attrs.slots}</span>}
+                                              {attrs.slots && attrs.gewicht && <span> • </span>}
+                                              {attrs.gewicht && <span>Gewicht: {attrs.gewicht}t</span>}
+                                            </div>
+                                          )}
+                                          {attrs.preferredPartner && (
+                                            <div className="text-dim" style={{ marginBottom: '0.25rem' }}>
+                                              <strong>Preferred Partner:</strong> {attrs.preferredPartner}
+                                            </div>
+                                          )}
+                                          {attrs.carleonTransport && (
+                                            <div className="text-dim" style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--albion-border)' }}>
+                                              <strong>Carleon Transport:</strong>
+                                              {attrs.carleonTransport.source && (
+                                                <div style={{ marginLeft: '0.5rem', marginTop: '0.25rem' }}>
+                                                  <strong>Origin:</strong> {attrs.carleonTransport.source}
+                                                </div>
+                                              )}
+                                              {attrs.carleonTransport.target && (
+                                                <div style={{ marginLeft: '0.5rem', marginTop: '0.25rem' }}>
+                                                  <strong>Goal:</strong> {attrs.carleonTransport.target}
+                                                </div>
+                                              )}
+                                              {(attrs.carleonTransport.slots || attrs.carleonTransport.gewicht) && (
+                                                <div style={{ marginLeft: '0.5rem', marginTop: '0.25rem' }}>
+                                                  {attrs.carleonTransport.slots && <span>Slots: {attrs.carleonTransport.slots}</span>}
+                                                  {attrs.carleonTransport.slots && attrs.carleonTransport.gewicht && <span> • </span>}
+                                                  {attrs.carleonTransport.gewicht && <span>Gewicht: {attrs.carleonTransport.gewicht}t</span>}
+                                                </div>
+                                              )}
+                                            </div>
+                                          )}
+                                        </>
+                                      );
+                                    })()}
+                                  </div>
+                                )}
+                                {activity.type !== 'transport' && Object.keys(signup.attributes).length > 0 && (
                                   <div style={{ marginTop: '0.25rem', fontSize: '0.8125rem' }}>
                                     {Object.entries(signup.attributes).map(([key, value]) => (
                                       <span key={key} className="text-dim" style={{ marginRight: '0.75rem' }}>
@@ -304,6 +390,23 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
           Created by {activity.expand?.creator?.name || 'Unknown'}
         </div>
       </div>
+
+      {showSignupForm && selectedRole && (
+        <SignupForm
+          activity={activity}
+          role={selectedRole}
+          onSuccess={() => {
+            setShowSignupForm(false);
+            setSelectedRole(null);
+            handleSignupSuccess();
+          }}
+          onCancel={() => {
+            setShowSignupForm(false);
+            setSelectedRole(null);
+          }}
+          overlapWarning={overlapWarning}
+        />
+      )}
     </div>
   );
 }

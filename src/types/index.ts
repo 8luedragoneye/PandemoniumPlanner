@@ -16,6 +16,7 @@ export interface Activity {
   description: string;
   creator: string; // User ID (creatorId from backend)
   status: 'recruiting' | 'full' | 'running';
+  type?: 'regular' | 'transport';
   zone?: string | null;
   minEquip?: string | null; // T4, T5, T6, T7, T8, T9, T10, T11
   created: string; // createdAt
@@ -74,4 +75,33 @@ export interface SignupFormData {
   roleId: string;
   attributes: Record<string, any>;
   comment?: string;
+}
+
+export interface TransportPair {
+  id: string;
+  activity: string; // Activity ID
+  fighter: string; // Signup ID
+  transporter: string; // Signup ID
+  created: string;
+  updated: string;
+  expand?: {
+    activity?: Activity;
+    fighter?: Signup;
+    transporter?: Signup;
+  };
+}
+
+export interface TransportSignupAttributes {
+  role: 'Fighter' | 'Transporter';
+  weaponType?: string; // For Fighters
+  source: string;
+  target: string;
+  preferredPartner?: string;
+  gearNeeds?: string;
+  returnTransport?: {
+    slots: number;
+    weight: number;
+    source: string;
+    target: string;
+  };
 }

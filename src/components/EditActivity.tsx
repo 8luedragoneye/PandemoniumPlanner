@@ -666,6 +666,7 @@ export function EditActivity() {
             activityId={activity.id} 
             roles={activityRoles} 
             signups={activitySignups}
+            activityType={activity.type}
             onUpdate={handleRoleUpdate}
           />
         </div>

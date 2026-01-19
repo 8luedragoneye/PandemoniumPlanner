@@ -7,10 +7,11 @@ interface RoleManagerProps {
   activityId: string;
   roles: Role[];
   signups: Signup[];
+  activityType?: 'regular' | 'transport';
   onUpdate?: () => void;
 }
 
-export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManagerProps) {
+export function RoleManager({ activityId, roles, signups, activityType, onUpdate }: RoleManagerProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [localRoles, setLocalRoles] = useState<Role[]>(roles);
@@ -28,6 +29,11 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
   const [newAttributeValue, setNewAttributeValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // Transport-specific state
+  const [isFighterRole, setIsFighterRole] = useState(false);
+  const [isTransporterRole, setIsTransporterRole] = useState(false);
+  const [weaponTypeAttr, setWeaponTypeAttr] = useState('');
 
   const handleAddAttribute = () => {
     if (!newAttributeKey.trim()) return;
@@ -53,10 +59,64 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
     });
   };
 
+  // Handle transport role checkbox changes
+  const handleFighterRoleChange = (checked: boolean) => {
+    setIsFighterRole(checked);
+    if (checked) {
+      setIsTransporterRole(false);
+      setFormData(prev => ({
+        ...prev,
+        name: 'Fighter',
+        slots: 1, // Always start with 1 for Fighter
+        attributes: weaponTypeAttr ? { weaponType: weaponTypeAttr } : {},
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        name: '',
+        slots: 1,
+        attributes: {},
+      }));
+    }
+  };
+
+  const handleTransporterRoleChange = (checked: boolean) => {
+    setIsTransporterRole(checked);
+    if (checked) {
+      setIsFighterRole(false);
+      setFormData(prev => ({
+        ...prev,
+        name: 'Transporter',
+        slots: 9999, // Effectively unlimited
+        attributes: {},
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        name: '',
+        slots: 1,
+        attributes: {},
+      }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('handleSubmit called', { editingRole: editingRole?.id, formData });
     setError('');
+    
+    // Validate transport role selection
+    if (activityType === 'transport' && !editingRole) {
+      if (!isFighterRole && !isTransporterRole) {
+        setError('Please select either Fighter or Transporter role');
+        return;
+      }
+      if (!formData.name) {
+        setError('Role name is required');
+        return;
+      }
+    }
+    
     setLoading(true);
 
     try {
@@ -106,6 +166,9 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
       setShowForm(false);
       setEditingRole(null);
       setFormData({ name: '', slots: 1, attributes: {} });
+      setIsFighterRole(false);
+      setIsTransporterRole(false);
+      setWeaponTypeAttr('');
       console.log('Form reset and closed');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to save role');
@@ -169,7 +232,36 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
             setNewAttributeKey('');
             setNewAttributeValue('');
             setEditingRole(null);
-            setFormData({ name: '', slots: 1, attributes: {} });
+            // Reset transport checkboxes
+            setIsFighterRole(false);
+            setIsTransporterRole(false);
+            setWeaponTypeAttr('');
+            
+            // Pre-populate for transport activities
+            if (activityType === 'transport') {
+              const hasFighter = roles.some(r => r.name === 'Fighter');
+              const hasTransporter = roles.some(r => r.name === 'Transporter');
+              
+              if (!hasFighter) {
+                setIsFighterRole(true);
+                setFormData({ 
+                  name: 'Fighter', 
+                  slots: 1, 
+                  attributes: {} 
+                });
+              } else if (!hasTransporter) {
+                setIsTransporterRole(true);
+                setFormData({ 
+                  name: 'Transporter', 
+                  slots: 9999, // Effectively unlimited
+                  attributes: {} 
+                });
+              } else {
+                setFormData({ name: '', slots: 1, attributes: {} });
+              }
+            } else {
+              setFormData({ name: '', slots: 1, attributes: {} });
+            }
             setShowForm(true);
             
             // Scroll form into view
@@ -195,57 +287,181 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
           <h3 style={{ marginBottom: '1rem' }}>
             {editingRole ? 'Edit Role' : 'New Role'}
           </h3>
-          <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '0.75rem',
-                fontWeight: 600,
-                color: 'var(--albion-text)',
-                fontSize: '0.9375rem'
-              }}>
-                Role Name <span style={{ color: 'var(--albion-red)' }}>*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                required
-                style={{ width: '100%' }}
-                placeholder="e.g., Tank, Healer, DPS"
-              />
-            </div>
+          <form onSubmit={handleSubmit} data-role-form>
+            {activityType === 'transport' && !editingRole ? (
+              <>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '0.75rem',
+                    fontWeight: 600,
+                    color: 'var(--albion-text)',
+                    fontSize: '0.9375rem'
+                  }}>
+                    Role Type <span style={{ color: 'var(--albion-red)' }}>*</span>
+                  </label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <label style={{ 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      padding: '0.75rem',
+                      backgroundColor: 'var(--albion-dark)',
+                      borderRadius: '8px',
+                      border: isTransporterRole ? '2px solid var(--albion-gold)' : '1px solid var(--albion-border)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={isTransporterRole}
+                        onChange={(e) => handleTransporterRoleChange(e.target.checked)}
+                        style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.9375rem' }}>Transporter</div>
+                        <div style={{ fontSize: '0.8125rem', color: 'var(--albion-text-dim)', marginTop: '0.25rem' }}>
+                          No additional attributes needed
+                        </div>
+                      </div>
+                    </label>
 
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '0.75rem',
-                fontWeight: 600,
-                color: 'var(--albion-text)',
-                fontSize: '0.9375rem'
-              }}>
-                Slots <span style={{ color: 'var(--albion-red)' }}>*</span>
-              </label>
-              <input
-                type="number"
-                value={formData.slots}
-                onChange={(e) => setFormData(prev => ({ ...prev, slots: parseInt(e.target.value) || 1 }))}
-                required
-                min="1"
-                style={{ width: '100%' }}
-              />
-            </div>
+                    <label style={{ 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      padding: '0.75rem',
+                      backgroundColor: 'var(--albion-dark)',
+                      borderRadius: '8px',
+                      border: isFighterRole ? '2px solid var(--albion-gold)' : '1px solid var(--albion-border)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={isFighterRole}
+                        onChange={(e) => handleFighterRoleChange(e.target.checked)}
+                        style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.9375rem' }}>Fighter</div>
+                        <div style={{ fontSize: '0.8125rem', color: 'var(--albion-text-dim)', marginTop: '0.25rem' }}>
+                          Requires weapon type attribute
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
 
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '0.75rem',
-                fontWeight: 600,
-                color: 'var(--albion-text)',
-                fontSize: '0.9375rem'
-              }}>
-                Attributes (Requirements)
-              </label>
+                {isFighterRole && (
+                  <>
+                    <div style={{ marginBottom: '1.5rem' }}>
+                      <label style={{ 
+                        display: 'block', 
+                        marginBottom: '0.5rem',
+                        fontWeight: 600,
+                        color: 'var(--albion-text)',
+                        fontSize: '0.9375rem'
+                      }}>
+                        Role <span style={{ color: 'var(--albion-red)' }}>*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={weaponTypeAttr}
+                        onChange={(e) => {
+                          setWeaponTypeAttr(e.target.value);
+                          setFormData(prev => ({
+                            ...prev,
+                            attributes: e.target.value ? { weaponType: e.target.value } : {},
+                          }));
+                        }}
+                        placeholder="DPS"
+                        style={{ width: '100%' }}
+                      />
+                    </div>
+                    <div style={{ marginBottom: '1.5rem' }}>
+                      <label style={{ 
+                        display: 'block', 
+                        marginBottom: '0.5rem',
+                        fontWeight: 600,
+                        color: 'var(--albion-text)',
+                        fontSize: '0.9375rem'
+                      }}>
+                        Slots <span style={{ color: 'var(--albion-red)' }}>*</span>
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.slots}
+                        onChange={(e) => setFormData(prev => ({ ...prev, slots: parseInt(e.target.value) || 1 }))}
+                        required
+                        min="1"
+                        style={{ width: '100%' }}
+                      />
+                    </div>
+                  </>
+                )}
+
+                <input
+                  type="hidden"
+                  value={formData.name}
+                  required
+                />
+              </>
+            ) : (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '0.75rem',
+                  fontWeight: 600,
+                  color: 'var(--albion-text)',
+                  fontSize: '0.9375rem'
+                }}>
+                  Role Name <span style={{ color: 'var(--albion-red)' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  required
+                  style={{ width: '100%' }}
+                  placeholder="e.g., Tank, Healer, DPS"
+                />
+              </div>
+            )}
+
+            {!(activityType === 'transport' && !editingRole) && (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '0.75rem',
+                  fontWeight: 600,
+                  color: 'var(--albion-text)',
+                  fontSize: '0.9375rem'
+                }}>
+                  Slots <span style={{ color: 'var(--albion-red)' }}>*</span>
+                </label>
+                <input
+                  type="number"
+                  value={formData.slots}
+                  onChange={(e) => setFormData(prev => ({ ...prev, slots: parseInt(e.target.value) || 1 }))}
+                  required
+                  min="1"
+                  style={{ width: '100%' }}
+                />
+              </div>
+            )}
+
+            {!(activityType === 'transport' && !editingRole) && (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '0.75rem',
+                  fontWeight: 600,
+                  color: 'var(--albion-text)',
+                  fontSize: '0.9375rem'
+                }}>
+                  Attributes (Requirements)
+                </label>
               <div className="flex" style={{ gap: '0.5rem', marginBottom: '0.5rem' }}>
                 <input
                   type="text"
@@ -301,7 +517,8 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
                   ))}
                 </div>
               )}
-            </div>
+              </div>
+            )}
 
             {error && (
               <div style={{ 
@@ -328,6 +545,9 @@ export function RoleManager({ activityId, roles, signups, onUpdate }: RoleManage
                   setShowForm(false);
                   setEditingRole(null);
                   setFormData({ name: '', slots: 1, attributes: {} });
+                  setIsFighterRole(false);
+                  setIsTransporterRole(false);
+                  setWeaponTypeAttr('required');
                   setError('');
                   setNewAttributeKey('');
                   setNewAttributeValue('');

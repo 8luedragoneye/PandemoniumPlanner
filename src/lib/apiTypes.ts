@@ -17,6 +17,7 @@ export interface ApiActivity {
   massupTime: string | null;
   description: string;
   status: 'recruiting' | 'full' | 'running';
+  type: string | null; // regular, transport
   zone: string | null;
   minEquip: string | null; // T4, T5, T6, T7, T8, T9, T10, T11
   creatorId: string;
@@ -68,4 +69,31 @@ export interface AuthResponse {
 
 export interface ApiError {
   error: string;
+}
+
+export interface ApiTransportPair {
+  id: string;
+  activityId: string;
+  fighterId: string;
+  transporterId: string;
+  createdAt: string;
+  updatedAt: string;
+  fighter?: {
+    id: string;
+    attributes: Record<string, unknown>;
+    player?: ApiUser;
+    role?: {
+      id: string;
+      name: string;
+    };
+  };
+  transporter?: {
+    id: string;
+    attributes: Record<string, unknown>;
+    player?: ApiUser;
+    role?: {
+      id: string;
+      name: string;
+    };
+  };
 }
