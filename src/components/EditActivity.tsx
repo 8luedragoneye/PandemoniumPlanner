@@ -324,6 +324,27 @@ export function EditActivity() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!activity) return;
+    
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${activity.name}"? This action cannot be undone.`
+    );
+    
+    if (!confirmed) return;
+
+    setSaving(true);
+    setError('');
+
+    try {
+      await activitiesApi.delete(activity.id);
+      navigate('/');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to delete activity');
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ 
@@ -650,8 +671,22 @@ export function EditActivity() {
               type="button"
               className="btn-secondary"
               onClick={() => navigate('/')}
+              disabled={saving}
             >
               Cancel
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={handleDelete}
+              disabled={saving}
+              style={{
+                backgroundColor: 'var(--albion-red)',
+                color: 'white',
+                marginLeft: 'auto'
+              }}
+            >
+              Delete Activity
             </button>
           </div>
         </form>
