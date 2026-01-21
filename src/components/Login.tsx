@@ -101,22 +101,10 @@ export function Login() {
           <button 
             type="submit" 
             className="btn-primary"
-            style={{ width: '100%', marginBottom: '1rem' }}
+            style={{ width: '100%' }}
             disabled={loading}
           >
             {loading ? 'Loading...' : (isRegister ? 'Register' : 'Login')}
-          </button>
-
-          <button
-            type="button"
-            className="btn-secondary"
-            style={{ width: '100%' }}
-            onClick={() => {
-              setIsRegister(!isRegister);
-              setError('');
-            }}
-          >
-            {isRegister ? 'Already have an account? Login' : 'Need an account? Register'}
           </button>
         </form>
       </div>
