@@ -97,6 +97,45 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps) {
         </p>
       </div>
 
+      {/* Priority Summary */}
+      {providers.length > 0 && (
+        <div style={{
+          marginBottom: '1.5rem',
+          padding: '1rem',
+          backgroundColor: 'var(--albion-darker)',
+          borderRadius: '8px',
+          border: '1px solid var(--albion-border)'
+        }}>
+          <h4 style={{ marginBottom: '0.75rem', color: 'var(--albion-gold)', fontSize: '1rem' }}>
+            Priority Overview
+          </h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', fontSize: '0.875rem' }}>
+            <div>
+              <strong style={{ color: 'var(--albion-text-dim)' }}>Total Providers:</strong>{' '}
+              <span style={{ fontWeight: 600 }}>{providers.length}</span>
+            </div>
+            <div>
+              <strong style={{ color: 'var(--albion-text-dim)' }}>Active Providers:</strong>{' '}
+              <span style={{ fontWeight: 600, color: 'var(--albion-green)' }}>
+                {providers.filter(p => p.isActive).length}
+              </span>
+            </div>
+            <div>
+              <strong style={{ color: 'var(--albion-text-dim)' }}>Highest Priority:</strong>{' '}
+              <span style={{ fontWeight: 600, color: 'var(--albion-gold)' }}>
+                {Math.max(...providers.map(p => p.priority ?? 0))}
+              </span>
+            </div>
+            <div>
+              <strong style={{ color: 'var(--albion-text-dim)' }}>Lowest Priority:</strong>{' '}
+              <span style={{ fontWeight: 600, color: 'var(--albion-red)' }}>
+                {Math.min(...providers.map(p => p.priority ?? 0))}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {error && (
         <div style={{ 
           color: 'var(--albion-red)', 
@@ -115,6 +154,9 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps) {
         <p className="text-dim">No fill providers registered yet.</p>
       ) : (
         <div>
+          <div style={{ marginBottom: '1rem', fontSize: '0.875rem', color: 'var(--albion-text-dim)' }}>
+            <strong>Sorted by Priority (Highest First)</strong>
+          </div>
           {providers.map(provider => (
             <div 
               key={provider.id}

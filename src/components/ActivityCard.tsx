@@ -399,48 +399,98 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
       </div>
 
 
-      {activity.type === 'transport' && !userFillProvider && user && activitySignups.some(s => s.player === user.id) && (
-        <div style={{
-          marginTop: '1.5rem',
-          padding: '1rem',
-          backgroundColor: 'rgba(212, 175, 55, 0.1)',
-          border: '1px solid var(--albion-gold)',
-          borderRadius: '4px'
-        }}>
-          <div className="flex-between">
-            <div>
-              <strong className="text-gold">Become a Fill Provider</strong>
-              <p className="text-dim" style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
-                Help optimize transport inventories by providing fill items. Earn priority points for fair rotation.
-              </p>
+      {activity.type === 'transport' && user && activitySignups.some(s => s.player === user.id) && (
+        <>
+          {userFillProvider ? (
+            <div style={{
+              marginTop: '1.5rem',
+              padding: '1rem',
+              backgroundColor: 'rgba(46, 204, 113, 0.1)',
+              border: '1px solid var(--albion-gold)',
+              borderRadius: '4px'
+            }}>
+              <div>
+                <strong className="text-gold">Your Fill Provider Status</strong>
+                <div style={{ marginTop: '0.75rem', fontSize: '0.875rem' }}>
+                  <div style={{ marginBottom: '0.5rem' }}>
+                    <strong>Priority:</strong>{' '}
+                    <span style={{
+                      padding: '0.125rem 0.5rem',
+                      backgroundColor: userFillProvider.priority && userFillProvider.priority > 0 
+                        ? 'rgba(46, 204, 113, 0.2)' 
+                        : userFillProvider.priority === 0
+                        ? 'rgba(212, 175, 55, 0.2)'
+                        : 'rgba(192, 57, 43, 0.2)',
+                      borderRadius: '4px',
+                      fontWeight: 600
+                    }}>
+                      {userFillProvider.priority ?? 0}
+                    </span>
+                  </div>
+                  <div style={{ marginBottom: '0.5rem' }}>
+                    <strong>Provides:</strong>{' '}
+                    {userFillProvider.providesSlots && <span>Slots</span>}
+                    {userFillProvider.providesSlots && userFillProvider.providesWeight && <span> • </span>}
+                    {userFillProvider.providesWeight && <span>Weight</span>}
+                  </div>
+                  <div style={{ marginBottom: '0.5rem', fontSize: '0.8125rem', color: 'var(--albion-text-dim)' }}>
+                    <strong>Status:</strong>{' '}
+                    {userFillProvider.isActive ? (
+                      <span style={{ color: 'var(--albion-green)' }}>Active</span>
+                    ) : (
+                      <span style={{ color: 'var(--albion-red)' }}>Inactive</span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '0.8125rem', color: 'var(--albion-text-dim)', marginTop: '0.5rem' }}>
+                    <strong>How priority works:</strong> +1 for participation, -1 for assignment, -1 for problems. Higher priority = assigned first.
+                  </div>
+                </div>
+              </div>
             </div>
-            <button
-              className="btn-primary"
-              onClick={() => setShowFillRegistration(true)}
-              style={{ padding: '0.5rem 1rem' }}
-            >
-              Register
-            </button>
-          </div>
-          {showFillRegistration && (
-            <div style={{ marginTop: '1rem' }}>
-              <FillProviderRegistration
-                onSuccess={async () => {
-                  setShowFillRegistration(false);
-                  // Reload provider status
-                  try {
-                    const providers = await fillProvidersApi.getAll();
-                    const userProvider = providers.find(p => p.userId === user?.id);
-                    setUserFillProvider(userProvider || null);
-                  } catch (error) {
-                    console.error('Error checking fill provider status:', error);
-                  }
-                }}
-                onCancel={() => setShowFillRegistration(false)}
-              />
+          ) : (
+            <div style={{
+              marginTop: '1.5rem',
+              padding: '1rem',
+              backgroundColor: 'rgba(212, 175, 55, 0.1)',
+              border: '1px solid var(--albion-gold)',
+              borderRadius: '4px'
+            }}>
+              <div className="flex-between">
+                <div>
+                  <strong className="text-gold">Become a Fill Provider</strong>
+                  <p className="text-dim" style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                    Help optimize transport inventories by providing fill items. Earn priority points for fair rotation.
+                  </p>
+                </div>
+                <button
+                  className="btn-primary"
+                  onClick={() => setShowFillRegistration(true)}
+                  style={{ padding: '0.5rem 1rem' }}
+                >
+                  Register
+                </button>
+              </div>
+              {showFillRegistration && (
+                <div style={{ marginTop: '1rem' }}>
+                  <FillProviderRegistration
+                    onSuccess={async () => {
+                      setShowFillRegistration(false);
+                      // Reload provider status
+                      try {
+                        const providers = await fillProvidersApi.getAll();
+                        const userProvider = providers.find(p => p.userId === user?.id);
+                        setUserFillProvider(userProvider || null);
+                      } catch (error) {
+                        console.error('Error checking fill provider status:', error);
+                      }
+                    }}
+                    onCancel={() => setShowFillRegistration(false)}
+                  />
+                </div>
+              )}
             </div>
           )}
-        </div>
+        </>
       )}
 
       <div className="flex-between" style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--albion-border)' }}>
