@@ -21,6 +21,7 @@ model User {
 
   createdActivities Activity[] @relation("ActivityCreator")
   signups          Signup[]
+  fillProvider      FillProvider?
 
   @@map("users")
 }
@@ -43,6 +44,8 @@ model Activity {
   roles   Role[]
   signups Signup[]
   pairs   TransportPair[]
+  fillAssignments FillAssignment[]
+  fillProviderPoints FillProviderPoints[]
 
   @@map("activities")
 }
@@ -92,8 +95,62 @@ model TransportPair {
   activity    Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
   fighter     Signup   @relation("FighterPair", fields: [fighterId], references: [id], onDelete: Cascade)
   transporter Signup   @relation("TransporterPair", fields: [transporterId], references: [id], onDelete: Cascade)
+  fillAssignments FillAssignment[]
 
   @@unique([activityId, fighterId])
   @@unique([activityId, transporterId])
   @@map("transport_pairs")
+}
+
+model FillProvider {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  providesSlots Boolean  @default(false)
+  providesWeight Boolean @default(false)
+  slotOrigin    String?
+  slotTarget    String?
+  weightOrigin  String?
+  weightTarget  String?
+  isActive      Boolean  @default(true)
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments FillAssignment[]
+  points     FillProviderPoints[]
+
+  @@map("fill_providers")
+}
+
+model FillAssignment {
+  id            String   @id @default(cuid())
+  activityId    String
+  pairId        String   // TransportPair ID
+  providerId    String   // FillProvider ID
+  fillType      String   // "slots" or "weight"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  activity Activity     @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  pair     TransportPair @relation(fields: [pairId], references: [id], onDelete: Cascade)
+  provider FillProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, pairId, providerId, fillType])
+  @@map("fill_assignments")
+}
+
+model FillProviderPoints {
+  id            String   @id @default(cuid())
+  providerId    String
+  activityId    String?
+  points        Int      @default(0)
+  reason        String   // "session_participation", "assignment", "problem"
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  provider FillProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  activity Activity?    @relation(fields: [activityId], references: [id], onDelete: SetNull)
+
+  @@map("fill_provider_points")
 }

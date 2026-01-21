@@ -4,9 +4,10 @@ import { Activity, Role, Signup } from '../types';
 import { formatDisplayDate, getSignupCount, isRoleFull, isUpcoming, checkOverlap } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { useActivities } from '../hooks/useActivities';
-import { signupsApi } from '../lib/api';
+import { signupsApi, fillProvidersApi } from '../lib/api';
 import { transformSignup } from '../lib/transformers';
 import { SignupForm } from './SignupForm';
+import { FillProviderRegistration } from './FillProviderRegistration';
 
 interface ActivityCardProps {
   activity: Activity;
@@ -26,6 +27,22 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
     setActivityRoles(roles);
     setActivitySignups(signups);
   }, [roles, signups]);
+
+  // Check if user is a fill provider (for transport activities)
+  useEffect(() => {
+    if (activity.type === 'transport' && user) {
+      const checkFillProvider = async () => {
+        try {
+          const providers = await fillProvidersApi.getAll();
+          const userProvider = providers.find(p => p.userId === user.id);
+          setUserFillProvider(userProvider || null);
+        } catch (error) {
+          console.error('Error checking fill provider status:', error);
+        }
+      };
+      checkFillProvider();
+    }
+  }, [activity.type, activity.id, user]);
 
   const totalSlots = activityRoles.reduce((sum, role) => sum + role.slots, 0);
   const totalSignups = activitySignups.length;
@@ -49,6 +66,8 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
 
   const [showSignupForm, setShowSignupForm] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [showFillRegistration, setShowFillRegistration] = useState(false);
+  const [userFillProvider, setUserFillProvider] = useState<any>(null);
 
   const handleRoleClick = async (role: Role) => {
     if (!user) return;
@@ -94,7 +113,12 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
       <div className="card-header">
         <div>
           <h2 className="card-title">
-            {activity.name}
+            <Link 
+              to={`/activity/${activity.id}`}
+              style={{ textDecoration: 'none', color: 'inherit' }}
+            >
+              {activity.name}
+            </Link>
             {activity.type === 'transport' && (
               <span style={{
                 marginLeft: '0.5rem',
@@ -375,14 +399,74 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
       </div>
 
 
+      {activity.type === 'transport' && !userFillProvider && user && activitySignups.some(s => s.player === user.id) && (
+        <div style={{
+          marginTop: '1.5rem',
+          padding: '1rem',
+          backgroundColor: 'rgba(212, 175, 55, 0.1)',
+          border: '1px solid var(--albion-gold)',
+          borderRadius: '4px'
+        }}>
+          <div className="flex-between">
+            <div>
+              <strong className="text-gold">Become a Fill Provider</strong>
+              <p className="text-dim" style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                Help optimize transport inventories by providing fill items. Earn priority points for fair rotation.
+              </p>
+            </div>
+            <button
+              className="btn-primary"
+              onClick={() => setShowFillRegistration(true)}
+              style={{ padding: '0.5rem 1rem' }}
+            >
+              Register
+            </button>
+          </div>
+          {showFillRegistration && (
+            <div style={{ marginTop: '1rem' }}>
+              <FillProviderRegistration
+                onSuccess={async () => {
+                  setShowFillRegistration(false);
+                  // Reload provider status
+                  try {
+                    const providers = await fillProvidersApi.getAll();
+                    const userProvider = providers.find(p => p.userId === user?.id);
+                    setUserFillProvider(userProvider || null);
+                  } catch (error) {
+                    console.error('Error checking fill provider status:', error);
+                  }
+                }}
+                onCancel={() => setShowFillRegistration(false)}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="flex-between" style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--albion-border)' }}>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           {isOwner && (
-            <Link 
-              to={`/activity/${activity.id}/edit`} 
-              className="btn-primary"
+            <>
+              <Link
+                to={`/activity/${activity.id}`}
+                className="btn-secondary"
+              >
+                View Details
+              </Link>
+              <Link
+                to={`/activity/${activity.id}/edit`}
+                className="btn-primary"
+              >
+                Edit Activity
+              </Link>
+            </>
+          )}
+          {!isOwner && (
+            <Link
+              to={`/activity/${activity.id}`}
+              className="btn-secondary"
             >
-              Edit Activity
+              View Details
             </Link>
           )}
         </div>

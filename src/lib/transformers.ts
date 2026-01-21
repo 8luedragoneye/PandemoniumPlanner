@@ -1,6 +1,6 @@
 // Transform API responses to frontend types
-import type { Activity, Role, Signup, User, TransportPair } from '../types';
-import type { ApiActivity, ApiRole, ApiSignup, ApiUser, ApiTransportPair } from './apiTypes';
+import type { Activity, Role, Signup, User, TransportPair, FillProvider, FillAssignment } from '../types';
+import type { ApiActivity, ApiRole, ApiSignup, ApiUser, ApiTransportPair, ApiFillProvider, ApiFillAssignment } from './apiTypes';
 
 export function transformUser(apiUser: ApiUser): User {
   return {
@@ -142,6 +142,46 @@ export function transformPair(apiPair: ApiTransportPair): TransportPair {
           } : undefined,
         },
       } : undefined,
+    },
+  };
+}
+
+export function transformFillProvider(apiProvider: ApiFillProvider): FillProvider {
+  return {
+    id: apiProvider.id,
+    userId: apiProvider.userId,
+    providesSlots: apiProvider.providesSlots,
+    providesWeight: apiProvider.providesWeight,
+    slotOrigin: apiProvider.slotOrigin ?? undefined,
+    slotTarget: apiProvider.slotTarget ?? undefined,
+    weightOrigin: apiProvider.weightOrigin ?? undefined,
+    weightTarget: apiProvider.weightTarget ?? undefined,
+    isActive: apiProvider.isActive,
+    notes: apiProvider.notes ?? undefined,
+    priority: apiProvider.priority,
+    user: apiProvider.user ? {
+      id: apiProvider.user.id,
+      name: apiProvider.user.name,
+      email: apiProvider.user.email
+    } : undefined,
+    created: apiProvider.createdAt,
+    updated: apiProvider.updatedAt,
+  };
+}
+
+export function transformFillAssignment(apiAssignment: ApiFillAssignment): FillAssignment {
+  return {
+    id: apiAssignment.id,
+    activity: apiAssignment.activityId,
+    pair: apiAssignment.pairId,
+    provider: apiAssignment.providerId,
+    fillType: apiAssignment.fillType,
+    created: apiAssignment.createdAt,
+    updated: apiAssignment.updatedAt,
+    expand: {
+      activity: undefined, // Can be populated if needed
+      pair: apiAssignment.pair ? transformPair(apiAssignment.pair) : undefined,
+      provider: apiAssignment.provider ? transformFillProvider(apiAssignment.provider) : undefined,
     },
   };
 }

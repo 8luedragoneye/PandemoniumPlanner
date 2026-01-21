@@ -2,13 +2,16 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useActivities } from '../hooks/useActivities';
-import { Activity, Role, Signup } from '../types';
+import { Activity, Role, Signup, TransportPair } from '../types';
 import { formatDisplayDate, isRoleFull, checkOverlap, isUpcoming } from '../lib/utils';
-import { transformActivity, transformRole, transformSignup } from '../lib/transformers';
+import { transformActivity, transformRole, transformSignup, transformPair } from '../lib/transformers';
 import { RoleManager } from './RoleManager';
 import { SignupForm } from './SignupForm';
 import { TransportPairManager } from './TransportPairManager';
-import { activitiesApi, signupsApi, rolesApi } from '../lib/api';
+import { FillProviderManager } from './FillProviderManager';
+import { FillAssignmentManager } from './FillAssignmentManager';
+import { FillProviderRegistration } from './FillProviderRegistration';
+import { activitiesApi, signupsApi, rolesApi, pairsApi, fillProvidersApi } from '../lib/api';
 
 export function ActivityDetail() {
   const { id } = useParams<{ id: string }>();
@@ -18,10 +21,13 @@ export function ActivityDetail() {
   const [activity, setActivity] = useState<Activity | null>(null);
   const [activityRoles, setActivityRoles] = useState<Role[]>([]);
   const [activitySignups, setActivitySignups] = useState<Signup[]>([]);
+  const [pairs, setPairs] = useState<TransportPair[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSignupForm, setShowSignupForm] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [overlapWarning, setOverlapWarning] = useState<string>('');
+  const [showFillRegistration, setShowFillRegistration] = useState(false);
+  const [userFillProvider, setUserFillProvider] = useState<any>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -45,6 +51,27 @@ export function ActivityDetail() {
           setActivitySignups(signupRecords.map(transformSignup));
         } catch (error) {
           console.error('Error fetching signups:', error);
+        }
+        
+        // Fetch pairs if transport activity
+        if (transformedActivity.type === 'transport') {
+          try {
+            const pairRecords = await pairsApi.getByActivity(id);
+            setPairs(pairRecords.map(transformPair));
+          } catch (error) {
+            console.error('Error fetching pairs:', error);
+          }
+
+          // Check if user is a fill provider
+          if (user) {
+            try {
+              const providers = await fillProvidersApi.getAll();
+              const userProvider = providers.find(p => p.userId === user.id);
+              setUserFillProvider(userProvider || null);
+            } catch (error) {
+              console.error('Error checking fill provider status:', error);
+            }
+          }
         }
         
         setLoading(false);
@@ -257,24 +284,95 @@ export function ActivityDetail() {
           </div>
         )}
 
-        {isOwner && isTransport && (
+        {isTransport && !userFillProvider && (
           <div style={{ marginBottom: '1.5rem' }}>
-            <TransportPairManager
-              activityId={activity.id}
-              signups={activitySignups}
-              onUpdate={async () => {
-                // Refetch signups to update pair status
-                try {
-                  const signupRecords = await signupsApi.getByActivity(activity.id);
-                  setActivitySignups(signupRecords.map(transformSignup));
-                  refetch();
-                } catch (error) {
-                  console.error('Error refetching:', error);
-                  refetch();
-                }
-              }}
-            />
+            <div style={{
+              padding: '1rem',
+              backgroundColor: 'rgba(212, 175, 55, 0.1)',
+              border: '1px solid var(--albion-gold)',
+              borderRadius: '4px',
+              marginBottom: '1rem'
+            }}>
+              <div className="flex-between">
+                <div>
+                  <strong className="text-gold">Become a Fill Provider</strong>
+                  <p className="text-dim" style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                    Help optimize transport inventories by providing fill items. Earn priority points for fair rotation.
+                  </p>
+                </div>
+                <button
+                  className="btn-primary"
+                  onClick={() => setShowFillRegistration(true)}
+                  style={{ padding: '0.5rem 1rem' }}
+                >
+                  Register
+                </button>
+              </div>
+            </div>
+            {showFillRegistration && (
+              <FillProviderRegistration
+                onSuccess={async () => {
+                  setShowFillRegistration(false);
+                  // Reload provider status
+                  try {
+                    const providers = await fillProvidersApi.getAll();
+                    const userProvider = providers.find(p => p.userId === user?.id);
+                    setUserFillProvider(userProvider || null);
+                  } catch (error) {
+                    console.error('Error checking fill provider status:', error);
+                  }
+                }}
+                onCancel={() => setShowFillRegistration(false)}
+              />
+            )}
           </div>
+        )}
+
+        {isOwner && isTransport && (
+          <>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <TransportPairManager
+                activityId={activity.id}
+                signups={activitySignups}
+                onUpdate={async () => {
+                  // Refetch signups and pairs to update status
+                  try {
+                    const signupRecords = await signupsApi.getByActivity(activity.id);
+                    setActivitySignups(signupRecords.map(transformSignup));
+                    const pairRecords = await pairsApi.getByActivity(activity.id);
+                    setPairs(pairRecords.map(transformPair));
+                    refetch();
+                  } catch (error) {
+                    console.error('Error refetching:', error);
+                    refetch();
+                  }
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <FillProviderManager
+                onUpdate={refetch}
+              />
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <FillAssignmentManager
+                activityId={activity.id}
+                pairs={pairs}
+                onUpdate={async () => {
+                  // Refetch pairs after assignment changes
+                  try {
+                    const pairRecords = await pairsApi.getByActivity(activity.id);
+                    setPairs(pairRecords.map(transformPair));
+                    refetch();
+                  } catch (error) {
+                    console.error('Error refetching pairs:', error);
+                  }
+                }}
+              />
+            </div>
+          </>
         )}
 
         <div style={{ marginBottom: '1.5rem' }}>

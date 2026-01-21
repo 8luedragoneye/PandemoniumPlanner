@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Signup, TransportPair, TransportSignupAttributes } from '../types';
-import { pairsApi } from '../lib/api';
-import { transformPair } from '../lib/transformers';
+import { Signup, TransportPair, TransportSignupAttributes, FillAssignment } from '../types';
+import { pairsApi, fillAssignmentsApi } from '../lib/api';
+import { transformPair, transformFillAssignment } from '../lib/transformers';
 
 interface TransportPairManagerProps {
   activityId: string;
@@ -11,6 +11,7 @@ interface TransportPairManagerProps {
 
 export function TransportPairManager({ activityId, signups, onUpdate }: TransportPairManagerProps) {
   const [pairs, setPairs] = useState<TransportPair[]>([]);
+  const [fillAssignments, setFillAssignments] = useState<FillAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedFighter, setSelectedFighter] = useState<string | null>(null);
@@ -18,6 +19,7 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
 
   useEffect(() => {
     loadPairs();
+    loadFillAssignments();
   }, [activityId]);
 
   const loadPairs = async () => {
@@ -30,6 +32,16 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
       setError(err instanceof Error ? err.message : 'Failed to load pairs');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadFillAssignments = async () => {
+    try {
+      const apiAssignments = await fillAssignmentsApi.getByActivity(activityId);
+      setFillAssignments(apiAssignments.map(transformFillAssignment));
+    } catch (err: unknown) {
+      // Silently fail - fill assignments are optional
+      console.error('Failed to load fill assignments:', err);
     }
   };
 
@@ -82,6 +94,7 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
       setSelectedFighter(null);
       setSelectedTransporter(null);
       await loadPairs();
+      await loadFillAssignments();
       if (onUpdate) onUpdate();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to create pair');
@@ -95,10 +108,17 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
       setError('');
       await pairsApi.delete(pairId);
       await loadPairs();
+      await loadFillAssignments();
       if (onUpdate) onUpdate();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to delete pair');
     }
+  };
+
+  const getFillAssignmentsForPair = (pairId: string): { slots?: FillAssignment; weight?: FillAssignment } => {
+    const slots = fillAssignments.find(a => a.pair === pairId && a.fillType === 'slots');
+    const weight = fillAssignments.find(a => a.pair === pairId && a.fillType === 'weight');
+    return { slots, weight };
   };
 
   const getSignupPair = (signupId: string): TransportPair | null => {
@@ -165,6 +185,8 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
               const fighterAttrs = fighter ? getTransportAttributes(fighter) : null;
               const transporterAttrs = transporter ? getTransportAttributes(transporter) : null;
 
+              const fills = getFillAssignmentsForPair(pair.id);
+              
               return (
                 <div
                   key={pair.id}
@@ -172,33 +194,70 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
                     padding: '1rem',
                     backgroundColor: 'var(--albion-darker)',
                     borderRadius: '8px',
-                    border: '1px solid var(--albion-gold)',
+                    border: '1px solid var(--albion-gold)'
+                  }}
+                >
+                  <div style={{
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr auto',
                     gap: '1rem',
                     alignItems: 'center'
-                  }}
-                >
-                  <div>
-                    <strong className="text-gold">Fighter:</strong>
-                    <div>{fighter?.expand?.player?.name || 'Unknown'}</div>
-                    {fighterAttrs?.weaponType && (
-                      <div className="text-dim" style={{ fontSize: '0.875rem' }}>
-                        {fighterAttrs.weaponType}
+                  }}>
+                    <div>
+                      <strong className="text-gold">Fighter:</strong>
+                      <div>{fighter?.expand?.player?.name || 'Unknown'}</div>
+                      {fighterAttrs?.weaponType && (
+                        <div className="text-dim" style={{ fontSize: '0.875rem' }}>
+                          {fighterAttrs.weaponType}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <strong className="text-gold">Transporter:</strong>
+                      <div>{transporter?.expand?.player?.name || 'Unknown'}</div>
+                    </div>
+                    <div>
+                      <button
+                        className="btn-danger"
+                        onClick={() => handleDeletePair(pair.id)}
+                        style={{ padding: '0.5rem 1rem' }}
+                      >
+                        Unpair
+                      </button>
+                    </div>
+                  </div>
+                  {(fills.slots || fills.weight) && (
+                    <div style={{
+                      marginTop: '0.75rem',
+                      paddingTop: '0.75rem',
+                      borderTop: '1px solid var(--albion-border)',
+                      fontSize: '0.875rem'
+                    }}>
+                      <strong style={{ color: 'var(--albion-gold)' }}>Fill Assignments:</strong>
+                      <div style={{ marginTop: '0.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                        {fills.slots && (
+                          <div style={{
+                            padding: '0.5rem',
+                            backgroundColor: 'var(--albion-dark)',
+                            borderRadius: '4px'
+                          }}>
+                            <span style={{ fontWeight: 600, color: 'var(--albion-gold)' }}>Slots:</span>{' '}
+                            {fills.slots.expand?.provider?.user?.name || 'Unknown'}
+                          </div>
+                        )}
+                        {fills.weight && (
+                          <div style={{
+                            padding: '0.5rem',
+                            backgroundColor: 'var(--albion-dark)',
+                            borderRadius: '4px'
+                          }}>
+                            <span style={{ fontWeight: 600, color: 'var(--albion-gold)' }}>Weight:</span>{' '}
+                            {fills.weight.expand?.provider?.user?.name || 'Unknown'}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <div>
-                    <strong className="text-gold">Transporter:</strong>
-                    <div>{transporter?.expand?.player?.name || 'Unknown'}</div>
-                  </div>
-                  <button
-                    className="btn-danger"
-                    onClick={() => handleDeletePair(pair.id)}
-                    style={{ padding: '0.5rem 1rem' }}
-                  >
-                    Unpair
-                  </button>
+                    </div>
+                  )}
                 </div>
               );
             })}

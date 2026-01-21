@@ -4,6 +4,7 @@ import { Login } from './components/Login';
 import { ActivityList } from './components/ActivityList';
 import { CreateActivity } from './components/CreateActivity';
 import { EditActivity } from './components/EditActivity';
+import { ActivityDetail } from './components/ActivityDetail';
 import { Layout } from './components/Layout';
 
 function App() {
@@ -42,7 +43,7 @@ function App() {
         <Routes>
           <Route path="/" element={<ActivityList />} />
           <Route path="/create" element={<CreateActivity />} />
-          <Route path="/activity/:id" element={<Navigate to="/" replace />} />
+          <Route path="/activity/:id" element={<ActivityDetail />} />
           <Route path="/activity/:id/edit" element={<EditActivity />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

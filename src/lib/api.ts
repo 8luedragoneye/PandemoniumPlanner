@@ -1,4 +1,4 @@
-import type { ApiActivity, ApiRole, ApiSignup, ApiUser, AuthResponse, ApiError, ApiTransportPair } from './apiTypes';
+import type { ApiActivity, ApiRole, ApiSignup, ApiUser, AuthResponse, ApiError, ApiTransportPair, ApiFillProvider, ApiFillAssignment } from './apiTypes';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -230,6 +230,92 @@ export const pairsApi = {
 
   delete: async (id: string): Promise<{ message: string }> => {
     return request<{ message: string }>(`/pairs/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// Fill Providers API
+export const fillProvidersApi = {
+  getAll: async (): Promise<ApiFillProvider[]> => {
+    return request<ApiFillProvider[]>('/fill-providers');
+  },
+
+  getOne: async (id: string): Promise<ApiFillProvider> => {
+    return request<ApiFillProvider>(`/fill-providers/${id}`);
+  },
+
+  create: async (data: {
+    providesSlots: boolean;
+    providesWeight: boolean;
+    slotOrigin?: string;
+    slotTarget?: string;
+    weightOrigin?: string;
+    weightTarget?: string;
+    notes?: string;
+  }): Promise<ApiFillProvider> => {
+    return request<ApiFillProvider>('/fill-providers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  update: async (id: string, data: {
+    providesSlots?: boolean;
+    providesWeight?: boolean;
+    slotOrigin?: string;
+    slotTarget?: string;
+    weightOrigin?: string;
+    weightTarget?: string;
+    notes?: string;
+    isActive?: boolean;
+  }): Promise<ApiFillProvider> => {
+    return request<ApiFillProvider>(`/fill-providers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  addPoints: async (id: string, data: {
+    activityId?: string;
+    points: number;
+    reason: string;
+    notes?: string;
+  }): Promise<{ id: string; points: number; reason: string }> => {
+    return request(`/fill-providers/${id}/points`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+};
+
+// Fill Assignments API
+export const fillAssignmentsApi = {
+  getByActivity: async (activityId: string): Promise<ApiFillAssignment[]> => {
+    return request<ApiFillAssignment[]>(`/fill-assignments/activity/${activityId}`);
+  },
+
+  create: async (data: {
+    activityId: string;
+    pairId: string;
+    providerId: string;
+    fillType: 'slots' | 'weight';
+  }): Promise<ApiFillAssignment> => {
+    return request<ApiFillAssignment>('/fill-assignments', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  autoAssign: async (activityId: string): Promise<{ message: string; assignments: ApiFillAssignment[] }> => {
+    return request<{ message: string; assignments: ApiFillAssignment[] }>('/fill-assignments/auto-assign', {
+      method: 'POST',
+      body: JSON.stringify({ activityId }),
+    });
+  },
+
+  delete: async (id: string): Promise<{ message: string }> => {
+    return request<{ message: string }>(`/fill-assignments/${id}`, {
       method: 'DELETE',
     });
   },

@@ -105,3 +105,49 @@ export interface TransportSignupAttributes {
     target: string;
   };
 }
+
+export interface FillProvider {
+  id: string;
+  userId: string;
+  providesSlots: boolean;
+  providesWeight: boolean;
+  slotOrigin?: string | null;
+  slotTarget?: string | null;
+  weightOrigin?: string | null;
+  weightTarget?: string | null;
+  isActive: boolean;
+  notes?: string | null;
+  priority?: number; // Calculated from points
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  created: string;
+  updated: string;
+}
+
+export interface FillAssignment {
+  id: string;
+  activity: string; // Activity ID
+  pair: string; // TransportPair ID
+  provider: string; // FillProvider ID
+  fillType: 'slots' | 'weight';
+  created: string;
+  updated: string;
+  expand?: {
+    activity?: Activity;
+    pair?: TransportPair;
+    provider?: FillProvider;
+  };
+}
+
+export interface FillProviderPoints {
+  id: string;
+  provider: string; // FillProvider ID
+  activity?: string | null; // Activity ID
+  points: number;
+  reason: string;
+  notes?: string | null;
+  created: string;
+}

@@ -97,3 +97,39 @@ export interface ApiTransportPair {
     };
   };
 }
+
+export interface ApiFillProvider {
+  id: string;
+  userId: string;
+  providesSlots: boolean;
+  providesWeight: boolean;
+  slotOrigin: string | null;
+  slotTarget: string | null;
+  weightOrigin: string | null;
+  weightTarget: string | null;
+  isActive: boolean;
+  notes: string | null;
+  priority?: number;
+  createdAt: string;
+  updatedAt: string;
+  user?: ApiUser;
+  points?: Array<{
+    id: string;
+    points: number;
+    reason: string;
+    activityId: string | null;
+    createdAt: string;
+  }>;
+}
+
+export interface ApiFillAssignment {
+  id: string;
+  activityId: string;
+  pairId: string;
+  providerId: string;
+  fillType: 'slots' | 'weight';
+  createdAt: string;
+  updatedAt: string;
+  provider?: ApiFillProvider;
+  pair?: ApiTransportPair;
+}
