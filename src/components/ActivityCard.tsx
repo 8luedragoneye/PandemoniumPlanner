@@ -8,6 +8,7 @@ import { signupsApi, fillProvidersApi } from '../lib/api';
 import { transformSignup } from '../lib/transformers';
 import { SignupForm } from './SignupForm';
 import { FillProviderRegistration } from './FillProviderRegistration';
+import { CollapsibleSection } from './CollapsibleSection';
 
 interface ActivityCardProps {
   activity: Activity;
@@ -109,19 +110,22 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
   };
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <div>
-          <h2 className="card-title">
-            <Link 
-              to={`/activity/${activity.id}`}
-              style={{ textDecoration: 'none', color: 'inherit' }}
-            >
-              {activity.name}
-            </Link>
+    <>
+    <CollapsibleSection 
+      title={
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <h2 className="card-title" style={{ margin: 0, fontSize: '1.25rem' }}>
+              <Link 
+                to={`/activity/${activity.id}`}
+                style={{ textDecoration: 'none', color: 'var(--albion-gold)' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {activity.name}
+              </Link>
+            </h2>
             {activity.type === 'transport' && (
               <span style={{
-                marginLeft: '0.5rem',
                 padding: '0.25rem 0.5rem',
                 backgroundColor: 'var(--albion-gold)',
                 color: 'var(--albion-dark)',
@@ -132,23 +136,24 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
                 TRANSPORT
               </span>
             )}
-          </h2>
-          <p className="text-dim" style={{ marginTop: '0.5rem' }}>
-            {formatDisplayDate(activity.date)}
-          </p>
-        </div>
-        <div>
-          <span className={`status-badge status-${activity.status}`}>
-            {activity.status}
-          </span>
-          {isFull && (
-            <span className="status-badge status-full" style={{ marginLeft: '0.5rem' }}>
-              Full
+            <span className="text-dim" style={{ fontSize: '0.875rem' }}>
+              {formatDisplayDate(activity.date)}
             </span>
-          )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span className={`status-badge status-${activity.status}`}>
+              {activity.status}
+            </span>
+            {isFull && (
+              <span className="status-badge status-full">
+                Full
+              </span>
+            )}
+          </div>
         </div>
-      </div>
-
+      }
+      defaultExpanded={false}
+    >
       <p style={{ marginBottom: '1rem' }}>{activity.description}</p>
 
       {activity.zone && (
@@ -524,23 +529,24 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
           Created by {activity.expand?.creator?.name || 'Unknown'}
         </div>
       </div>
+    </CollapsibleSection>
 
-      {showSignupForm && selectedRole && (
-        <SignupForm
-          activity={activity}
-          role={selectedRole}
-          onSuccess={() => {
-            setShowSignupForm(false);
-            setSelectedRole(null);
-            handleSignupSuccess();
-          }}
-          onCancel={() => {
-            setShowSignupForm(false);
-            setSelectedRole(null);
-          }}
-          overlapWarning={overlapWarning}
-        />
-      )}
-    </div>
+    {showSignupForm && selectedRole && (
+      <SignupForm
+        activity={activity}
+        role={selectedRole}
+        onSuccess={() => {
+          setShowSignupForm(false);
+          setSelectedRole(null);
+          handleSignupSuccess();
+        }}
+        onCancel={() => {
+          setShowSignupForm(false);
+          setSelectedRole(null);
+        }}
+        overlapWarning={overlapWarning}
+      />
+    )}
+    </>
   );
 }

@@ -44,7 +44,6 @@ export function EditActivity() {
 
         setActivity(activity);
         const activityDate = formatCETDate(activity.date).replace(' ', 'T');
-        const activityDateObj = new Date(activity.date);
         const activityDateStr = formatDateInput(activity.date);
         const activityTimeStr = formatCETDate(activity.date).split('T')[1].substring(0, 5);
         
@@ -92,31 +91,6 @@ export function EditActivity() {
 
     fetchActivity();
   }, [id, user, navigate]);
-
-  const handleRoleUpdate = async () => {
-    console.log('handleRoleUpdate called for activity:', id);
-    if (!id) {
-      console.warn('handleRoleUpdate: No activity ID!');
-      return;
-    }
-    try {
-      console.log('Refetching roles for activity:', id);
-      const roleRecords = await rolesApi.getByActivity(id);
-      console.log('Fetched roles from API:', roleRecords);
-      const transformedRoles = roleRecords.map(transformRole);
-      console.log('Transformed roles:', transformedRoles);
-      console.log('Current activityRoles before update:', activityRoles);
-      setActivityRoles([...transformedRoles]); // Create new array reference to force update
-      console.log('Updated activityRoles state');
-      
-      const signupRecords = await signupsApi.getByActivity(id);
-      setActivitySignups(signupRecords.map(transformSignup));
-      console.log('handleRoleUpdate completed successfully');
-    } catch (error) {
-      console.error('Error refetching roles/signups:', error);
-      alert('Failed to refresh roles. Please reload the page.');
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -702,7 +676,18 @@ export function EditActivity() {
             roles={activityRoles} 
             signups={activitySignups}
             activityType={activity.type}
-            onUpdate={handleRoleUpdate}
+            onUpdate={async () => {
+              try {
+                const roleRecords = await rolesApi.getByActivity(activity.id);
+                setActivityRoles(roleRecords.map(transformRole));
+                
+                const signupRecords = await signupsApi.getByActivity(activity.id);
+                setActivitySignups(signupRecords.map(transformSignup));
+              } catch (error) {
+                console.error('Error refetching roles/signups:', error);
+                alert('Failed to refresh roles. Please reload the page.');
+              }
+            }}
           />
         </div>
       </div>
