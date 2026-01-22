@@ -2,12 +2,46 @@ import express from 'express';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';
 import { handleError, handleNotFound, handleUnauthorized, handleValidationError } from '../lib/errorHandler';
+import { ACTIVITY_CLEANUP_HOURS } from '../lib/constants';
 
 const router = express.Router();
+
+/**
+ * Cleanup old activities (runs asynchronously, doesn't block response)
+ * Deletes activities that are past by ACTIVITY_CLEANUP_HOURS
+ * This works well with free hosting that has sleep/idle timeouts
+ */
+async function cleanupOldActivities(): Promise<void> {
+  try {
+    const cutoffTime = new Date();
+    cutoffTime.setHours(cutoffTime.getHours() - ACTIVITY_CLEANUP_HOURS);
+
+    const deleted = await prisma.activity.deleteMany({
+      where: {
+        date: {
+          lt: cutoffTime,
+        },
+      },
+    });
+
+    if (deleted.count > 0) {
+      console.log(`🧹 Cleaned up ${deleted.count} old activity/activities`);
+    }
+  } catch (error) {
+    // Don't throw - cleanup failures shouldn't break the API
+    console.error('Error during activity cleanup:', error);
+  }
+}
 
 // Get all activities
 router.get('/', authenticateToken, async (req, res) => {
   try {
+    // Cleanup old activities asynchronously (doesn't block response)
+    // This works well with free hosting that has sleep/idle timeouts
+    cleanupOldActivities().catch(() => {
+      // Silently fail - cleanup shouldn't affect the response
+    });
+
     const activities = await prisma.activity.findMany({
       include: {
         creator: {
