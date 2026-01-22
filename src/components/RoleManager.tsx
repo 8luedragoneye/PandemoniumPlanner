@@ -11,7 +11,7 @@ interface RoleManagerProps {
   onUpdate?: () => void;
 }
 
-export function RoleManager({ activityId, roles, signups, activityType, onUpdate }: RoleManagerProps) {
+export function RoleManager({ activityId, roles, signups, activityType, onUpdate }: RoleManagerProps): JSX.Element {
   const [showForm, setShowForm] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [localRoles, setLocalRoles] = useState<Role[]>(roles);
@@ -102,7 +102,6 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('handleSubmit called', { editingRole: editingRole?.id, formData });
     setError('');
     
     // Validate transport role selection
@@ -121,46 +120,25 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
 
     try {
       if (editingRole) {
-        console.log('Updating role:', editingRole.id, 'with data:', {
+        await rolesApi.update(editingRole.id, {
           name: formData.name,
           slots: formData.slots,
           attributes: formData.attributes,
         });
-        const updated = await rolesApi.update(editingRole.id, {
-          name: formData.name,
-          slots: formData.slots,
-          attributes: formData.attributes,
-        });
-        console.log('Role updated successfully:', updated);
         // Call onUpdate to refresh the roles list BEFORE closing form
         if (onUpdate) {
-          console.log('Calling onUpdate callback...');
           await onUpdate();
-          console.log('onUpdate callback completed');
-        } else {
-          console.warn('onUpdate callback is not defined!');
         }
       } else {
-        console.log('Creating new role with data:', {
-          activityId,
-          name: formData.name,
-          slots: formData.slots,
-          attributes: formData.attributes,
-        });
         await rolesApi.create({
           activityId,
           name: formData.name,
           slots: formData.slots,
           attributes: formData.attributes,
         });
-        console.log('Role created successfully');
         // Call onUpdate to refresh the roles list BEFORE closing form
         if (onUpdate) {
-          console.log('Calling onUpdate callback...');
           await onUpdate();
-          console.log('onUpdate callback completed');
-        } else {
-          console.warn('onUpdate callback is not defined!');
         }
       }
       setShowForm(false);
@@ -169,10 +147,9 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
       setIsFighterRole(false);
       setIsTransporterRole(false);
       setWeaponTypeAttr('');
-      console.log('Form reset and closed');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to save role');
-      console.error('Error saving role:', err);
+      // Error is already set in setError above
     } finally {
       setLoading(false);
     }
@@ -199,7 +176,7 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
       if (formElement) {
         formElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
-    }, 100);
+    }, DEBOUNCE_DELAY_MS);
   };
 
   const handleDelete = async (role: Role) => {
@@ -270,7 +247,7 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
               if (formElement) {
                 formElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
               }
-            }, 100);
+            }, DEBOUNCE_DELAY_MS);
           }}
         >
           + Add Role

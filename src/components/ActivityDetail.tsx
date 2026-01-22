@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useActivities } from '../hooks/useActivities';
-import { Activity, Role, Signup, TransportPair } from '../types';
+import { Activity, Role, Signup, TransportPair, TransportSignupAttributes, FillProvider } from '../types';
 import { formatDisplayDate, isRoleFull, checkOverlap, isUpcoming } from '../lib/utils';
 import { transformActivity, transformRole, transformSignup, transformPair } from '../lib/transformers';
 import { SignupForm } from './SignupForm';
@@ -13,7 +13,7 @@ import { FillProviderRegistration } from './FillProviderRegistration';
 import { CollapsibleSection } from './CollapsibleSection';
 import { activitiesApi, signupsApi, rolesApi, pairsApi, fillProvidersApi } from '../lib/api';
 
-export function ActivityDetail() {
+export function ActivityDetail(): JSX.Element {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -27,7 +27,7 @@ export function ActivityDetail() {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [overlapWarning, setOverlapWarning] = useState<string>('');
   const [showFillRegistration, setShowFillRegistration] = useState(false);
-  const [userFillProvider, setUserFillProvider] = useState<any>(null);
+  const [userFillProvider, setUserFillProvider] = useState<FillProvider | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -286,7 +286,7 @@ export function ActivityDetail() {
 
       {/* Management Sections (Owner Only) */}
       {isOwner && isTransport && (
-        <CollapsibleSection title="Management" defaultExpanded={false}>
+        <CollapsibleSection title="Transport Pairing" defaultExpanded={false}>
           <TransportPairManager
             activityId={activity.id}
             signups={activitySignups}
@@ -514,7 +514,7 @@ export function ActivityDetail() {
                       {roleSignups.map(signup => {
                         const isOwnSignup = signup.player === user?.id;
                         const transportAttrs = isTransport && signup.attributes && typeof signup.attributes === 'object' 
-                          ? (signup.attributes as any) 
+                          ? (signup.attributes as TransportSignupAttributes) 
                           : null;
                         return (
                           <div 

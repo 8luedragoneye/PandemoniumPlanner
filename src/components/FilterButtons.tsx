@@ -5,7 +5,7 @@ interface FilterButtonsProps {
   onFilterChange: (filter: string) => void;
 }
 
-export function FilterButtons({ currentFilter, filters, onFilterChange }: FilterButtonsProps) {
+export function FilterButtons({ currentFilter, filters, onFilterChange }: FilterButtonsProps): JSX.Element {
   return (
     <div style={{ 
       marginBottom: '2rem', 

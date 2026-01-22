@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Activity, Role, Signup } from '../types';
+import { Activity, Role, Signup, FillProvider, TransportSignupAttributes } from '../types';
 import { formatDisplayDate, getSignupCount, isRoleFull, isUpcoming, checkOverlap } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { useActivities } from '../hooks/useActivities';
@@ -16,7 +16,7 @@ interface ActivityCardProps {
   signups: Signup[];
 }
 
-export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
+export function ActivityCard({ activity, roles, signups }: ActivityCardProps): JSX.Element {
   const { user } = useAuth();
   const { activities, signups: allSignups, refetch } = useActivities();
   const isOwner = user?.id === activity.creator;
@@ -68,7 +68,7 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
   const [showSignupForm, setShowSignupForm] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [showFillRegistration, setShowFillRegistration] = useState(false);
-  const [userFillProvider, setUserFillProvider] = useState<any>(null);
+  const [userFillProvider, setUserFillProvider] = useState<FillProvider | null>(null);
 
   const handleRoleClick = async (role: Role) => {
     if (!user) return;
@@ -305,7 +305,8 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps) {
                                 {activity.type === 'transport' && Object.keys(signup.attributes).length > 0 && (
                                   <div style={{ marginTop: '0.25rem', fontSize: '0.8125rem' }}>
                                     {(() => {
-                                      const attrs = signup.attributes as any;
+                                      // Type guard to check if attributes match TransportSignupAttributes
+                                      const attrs = signup.attributes as TransportSignupAttributes;
                                       return (
                                         <>
                                           {attrs.role && (

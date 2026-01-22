@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FillProvider, FillAssignment, TransportPair } from '../types';
 import { fillProvidersApi, fillAssignmentsApi } from '../lib/api';
 import { transformFillProvider, transformFillAssignment } from '../lib/transformers';
+import { MAX_FILL_ASSIGNMENTS_PER_PROVIDER } from '../lib/constants';
 
 interface FillAssignmentManagerProps {
   activityId: string;
@@ -9,7 +10,7 @@ interface FillAssignmentManagerProps {
   onUpdate?: () => void;
 }
 
-export function FillAssignmentManager({ activityId, pairs, onUpdate }: FillAssignmentManagerProps) {
+export function FillAssignmentManager({ activityId, pairs, onUpdate }: FillAssignmentManagerProps): JSX.Element {
   const [providers, setProviders] = useState<FillProvider[]>([]);
   const [assignments, setAssignments] = useState<FillAssignment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -222,9 +223,9 @@ export function FillAssignmentManager({ activityId, pairs, onUpdate }: FillAssig
                           <option 
                             key={provider.id} 
                             value={provider.id}
-                            disabled={count >= 2}
+                            disabled={count >= MAX_FILL_ASSIGNMENTS_PER_PROVIDER}
                           >
-                            {provider.user?.name || 'Unknown'} (Priority: {provider.priority ?? 0}){count >= 2 ? ' - Max assignments' : ''}
+                            {provider.user?.name || 'Unknown'} (Priority: {provider.priority ?? 0}){count >= MAX_FILL_ASSIGNMENTS_PER_PROVIDER ? ' - Max assignments' : ''}
                           </option>
                         );
                       })}

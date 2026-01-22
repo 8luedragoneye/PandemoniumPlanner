@@ -12,7 +12,7 @@ export function CollapsibleSection({
   children, 
   defaultExpanded = false,
   className = ''
-}: CollapsibleSectionProps) {
+}: CollapsibleSectionProps): JSX.Element {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   return (

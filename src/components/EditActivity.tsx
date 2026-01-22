@@ -7,7 +7,7 @@ import { transformActivity, transformRole, transformSignup } from '../lib/transf
 import { activitiesApi, rolesApi, signupsApi } from '../lib/api';
 import { RoleManager } from './RoleManager';
 
-export function EditActivity() {
+export function EditActivity(): JSX.Element {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();

@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { fillProvidersApi } from '../lib/api';
+import { MIN_FILL_SLOTS, MIN_FILL_WEIGHT } from '../lib/constants';
 
 interface FillProviderRegistrationProps {
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export function FillProviderRegistration({ onSuccess, onCancel }: FillProviderRegistrationProps) {
+export function FillProviderRegistration({ onSuccess, onCancel }: FillProviderRegistrationProps): JSX.Element {
   const { user } = useAuth();
   const [providesSlots, setProvidesSlots] = useState(false);
   const [providesWeight, setProvidesWeight] = useState(false);
@@ -91,7 +92,7 @@ export function FillProviderRegistration({ onSuccess, onCancel }: FillProviderRe
         </p>
         <ul style={{ margin: 0, paddingLeft: '1.5rem', color: 'var(--albion-text-dim)' }}>
           <li>Must have participated in at least one transport activity</li>
-          <li>Must provide at least 100 slots or 20t per session</li>
+          <li>Must provide at least {MIN_FILL_SLOTS} slots or {MIN_FILL_WEIGHT}t per session</li>
           <li>Must manage your own sources and targets</li>
           <li>Slot and weight fills must be in separate sources</li>
         </ul>

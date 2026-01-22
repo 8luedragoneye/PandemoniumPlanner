@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
-export function Login() {
+export function Login(): JSX.Element {
   const { login, register } = useAuth();
   const [isRegister, setIsRegister] = useState(false);
   const [name, setName] = useState('');

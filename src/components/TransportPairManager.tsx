@@ -9,7 +9,7 @@ interface TransportPairManagerProps {
   onUpdate?: () => void;
 }
 
-export function TransportPairManager({ activityId, signups, onUpdate }: TransportPairManagerProps) {
+export function TransportPairManager({ activityId, signups, onUpdate }: TransportPairManagerProps): JSX.Element {
   const [pairs, setPairs] = useState<TransportPair[]>([]);
   const [fillAssignments, setFillAssignments] = useState<FillAssignment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,9 +47,9 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
 
   const getTransportAttributes = (signup: Signup): TransportSignupAttributes | null => {
     if (signup.attributes && typeof signup.attributes === 'object') {
-      const attrs = signup.attributes as any;
+      const attrs = signup.attributes as TransportSignupAttributes;
       if (attrs.role === 'Fighter' || attrs.role === 'Transporter') {
-        return attrs as TransportSignupAttributes;
+        return attrs;
       }
     }
     return null;
@@ -145,15 +145,6 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
 
   return (
     <div style={{ marginTop: '2rem' }}>
-      <h2 style={{ 
-        marginBottom: '1.5rem', 
-        color: 'var(--albion-gold)',
-        fontSize: '1.5rem',
-        fontWeight: 600
-      }}>
-        Transport Pairs
-      </h2>
-
       {error && (
         <div style={{ 
           color: 'var(--albion-red)', 
@@ -421,9 +412,9 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
                       {signup.expand?.player?.name || 'Unknown'}
                       {preferred && ' ⭐ Preferred match'}
                     </div>
-                    {signup.attributes && typeof signup.attributes === 'object' && (signup.attributes as any).preferredPartner && (
+                    {signup.attributes && typeof signup.attributes === 'object' && (signup.attributes as TransportSignupAttributes).preferredPartner && (
                       <div className="text-dim" style={{ fontSize: '0.75rem' }}>
-                        Prefers: {(signup.attributes as any).preferredPartner}
+                        Prefers: {(signup.attributes as TransportSignupAttributes).preferredPartner}
                       </div>
                     )}
                   </div>

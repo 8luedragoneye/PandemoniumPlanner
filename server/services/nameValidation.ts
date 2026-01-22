@@ -52,7 +52,7 @@ export async function validateName(name: string): Promise<boolean> {
  * Finds a user by name (helper function)
  * Uses findFirst to work even if unique constraint isn't applied yet
  */
-export async function findUserByName(name: string) {
+export async function findUserByName(name: string): Promise<User | null> {
   try {
     // Try findUnique first (if unique constraint exists)
     try {

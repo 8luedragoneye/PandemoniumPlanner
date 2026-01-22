@@ -3,7 +3,15 @@ import { Activity, Role, Signup } from '../types';
 import { activitiesApi, rolesApi, signupsApi } from '../lib/api';
 import { transformActivity, transformRole, transformSignup } from '../lib/transformers';
 
-export function useActivities() {
+interface UseActivitiesReturn {
+  activities: Activity[];
+  roles: Role[];
+  signups: Signup[];
+  loading: boolean;
+  refetch: () => Promise<void>;
+}
+
+export function useActivities(): UseActivitiesReturn {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [signups, setSignups] = useState<Signup[]>([]);

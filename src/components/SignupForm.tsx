@@ -11,10 +11,10 @@ interface SignupFormProps {
   overlapWarning: string;
 }
 
-export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning }: SignupFormProps) {
+export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning }: SignupFormProps): JSX.Element {
   const { user } = useAuth();
   const isTransport = activity.type === 'transport';
-  const [attributes, setAttributes] = useState<Record<string, any>>({});
+  const [attributes, setAttributes] = useState<Record<string, unknown>>({});
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

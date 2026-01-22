@@ -5,7 +5,7 @@ import { ActivityFormData } from '../types';
 import { formatCETDate, formatDateInput, parseDateInput } from '../lib/utils';
 import { activitiesApi } from '../lib/api';
 
-export function CreateActivity() {
+export function CreateActivity(): JSX.Element {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);

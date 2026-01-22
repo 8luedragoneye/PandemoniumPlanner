@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { FillProvider } from '../types';
 import { fillProvidersApi } from '../lib/api';
 import { transformFillProvider } from '../lib/transformers';
+import { MIN_FILL_SLOTS } from '../lib/constants';
 
 interface FillProviderManagerProps {
   onUpdate?: () => void;
 }
 
-export function FillProviderManager({ onUpdate }: FillProviderManagerProps) {
+export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX.Element {
   const [providers, setProviders] = useState<FillProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -89,7 +90,7 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps) {
           Minimum Requirements:
         </p>
         <ul style={{ margin: 0, paddingLeft: '1.5rem', color: 'var(--albion-text-dim)' }}>
-          <li>Slot Fill: Minimum 100 slots per session</li>
+          <li>Slot Fill: Minimum {MIN_FILL_SLOTS} slots per session</li>
           <li>Weight Fill: Minimum 20t per session</li>
         </ul>
         <p style={{ marginTop: '0.5rem', fontSize: '0.8125rem', color: 'var(--albion-text-dim)' }}>

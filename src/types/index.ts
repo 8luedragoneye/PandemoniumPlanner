@@ -68,12 +68,12 @@ export interface ActivityFormData {
 export interface RoleFormData {
   name: string;
   slots: number;
-  attributes: Record<string, any>;
+  attributes: Record<string, unknown>;
 }
 
 export interface SignupFormData {
   roleId: string;
-  attributes: Record<string, any>;
+  attributes: Record<string, unknown>;
   comment?: string;
 }
 
@@ -98,11 +98,19 @@ export interface TransportSignupAttributes {
   target: string;
   preferredPartner?: string;
   gearNeeds?: string;
+  slots?: number;
+  gewicht?: number;
   returnTransport?: {
     slots: number;
     weight: number;
     source: string;
     target: string;
+  };
+  carleonTransport?: {
+    source?: string;
+    target?: string;
+    slots?: number;
+    gewicht?: number;
   };
 }
 

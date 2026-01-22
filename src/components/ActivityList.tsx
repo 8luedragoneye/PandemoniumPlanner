@@ -17,7 +17,7 @@ const FILTER_OPTIONS = [
   { value: 'past', label: 'Past' },
 ] as const;
 
-export function ActivityList() {
+export function ActivityList(): JSX.Element {
   const { activities, roles, signups, loading } = useActivities();
   const { user } = useAuth();
   const [filter, setFilter] = useState<FilterType>('all');

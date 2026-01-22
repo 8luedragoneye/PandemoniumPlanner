@@ -2,7 +2,17 @@ import { useState, useEffect, useCallback } from 'react';
 import { User } from '../types';
 import { authApi, setToken, removeToken } from '../lib/api';
 
-export function useAuth() {
+interface UseAuthReturn {
+  user: User | null;
+  loading: boolean;
+  login: (name: string) => Promise<{ user: User; token: string }>;
+  register: (name: string) => Promise<{ user: User; token: string }>;
+  logout: () => void;
+  isAuthenticated: boolean;
+  authVersion: number;
+}
+
+export function useAuth(): UseAuthReturn {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [authVersion, setAuthVersion] = useState(0); // Force re-render on auth changes

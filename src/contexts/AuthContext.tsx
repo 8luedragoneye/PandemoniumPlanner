@@ -5,15 +5,15 @@ import { authApi, removeToken } from '../lib/api';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (name: string) => Promise<any>;
-  register: (name: string) => Promise<any>;
+  login: (name: string) => Promise<{ user: User; token: string }>;
+  register: (name: string) => Promise<{ user: User; token: string }>;
   logout: () => void;
   isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -101,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
