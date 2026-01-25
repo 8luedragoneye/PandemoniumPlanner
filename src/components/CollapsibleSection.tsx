@@ -5,13 +5,15 @@ interface CollapsibleSectionProps {
   children: ReactNode;
   defaultExpanded?: boolean;
   className?: string;
+  headerActions?: ReactNode;
 }
 
 export function CollapsibleSection({ 
   title, 
   children, 
   defaultExpanded = false,
-  className = ''
+  className = '',
+  headerActions
 }: CollapsibleSectionProps): JSX.Element {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
@@ -53,18 +55,28 @@ export function CollapsibleSection({
             title
           )}
         </div>
-        <span
+        <div 
           style={{
-            display: 'inline-block',
-            transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-            transition: 'transform 0.2s ease',
-            fontSize: '1.25rem',
-            color: 'var(--albion-gold)',
-            userSelect: 'none'
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem'
           }}
+          onClick={(e) => e.stopPropagation()}
         >
-          ▼
-        </span>
+          {headerActions}
+          <span
+            style={{
+              display: 'inline-block',
+              transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 0.2s ease',
+              fontSize: '1.25rem',
+              color: 'var(--albion-gold)',
+              userSelect: 'none'
+            }}
+          >
+            ▼
+          </span>
+        </div>
       </div>
       {isExpanded && (
         <div 

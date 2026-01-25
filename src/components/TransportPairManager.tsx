@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Signup, TransportPair, TransportSignupAttributes, FillAssignment } from '../types';
 import { pairsApi, fillAssignmentsApi } from '../lib/api';
 import { transformPair, transformFillAssignment } from '../lib/transformers';
+import { getTransportAttributes, getFighters, getTransporters } from '../lib/utils';
 
 interface TransportPairManagerProps {
   activityId: string;
@@ -16,11 +17,19 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
   const [error, setError] = useState('');
   const [selectedFighter, setSelectedFighter] = useState<string | null>(null);
   const [selectedTransporter, setSelectedTransporter] = useState<string | null>(null);
+  const [hasAutoPairedPreferred, setHasAutoPairedPreferred] = useState(false);
 
   useEffect(() => {
     loadPairs();
     loadFillAssignments();
   }, [activityId]);
+
+  // Auto-pair preferred matches after pairs are loaded
+  useEffect(() => {
+    if (!loading && !hasAutoPairedPreferred && signups.length > 0) {
+      autoPairPreferredMatches();
+    }
+  }, [loading, hasAutoPairedPreferred, signups.length]);
 
   const loadPairs = async () => {
     try {
@@ -45,16 +54,6 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
     }
   };
 
-  const getTransportAttributes = (signup: Signup): TransportSignupAttributes | null => {
-    if (signup.attributes && typeof signup.attributes === 'object') {
-      const attrs = signup.attributes as TransportSignupAttributes;
-      if (attrs.role === 'Fighter' || attrs.role === 'Transporter') {
-        return attrs;
-      }
-    }
-    return null;
-  };
-
   const getPairedSignupIds = (): Set<string> => {
     const paired = new Set<string>();
     pairs.forEach(pair => {
@@ -64,15 +63,8 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
     return paired;
   };
 
-  const fighters = signups.filter(s => {
-    const attrs = getTransportAttributes(s);
-    return attrs?.role === 'Fighter';
-  });
-
-  const transporters = signups.filter(s => {
-    const attrs = getTransportAttributes(s);
-    return attrs?.role === 'Transporter';
-  });
+  const fighters = getFighters(signups);
+  const transporters = getTransporters(signups);
 
   const pairedIds = getPairedSignupIds();
   const unpairedFighters = fighters.filter(s => !pairedIds.has(s.id));
@@ -125,11 +117,14 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
     return pairs.find(p => p.fighter === signupId || p.transporter === signupId) || null;
   };
 
-  const getPreferredPartnerMatch = (signup: Signup): Signup | null => {
+  const getPreferredPartnerMatch = (signup: Signup, excludePaired: boolean = false): Signup | null => {
     const attrs = getTransportAttributes(signup);
     if (!attrs?.preferredPartner) return null;
 
-    const otherSignups = attrs.role === 'Fighter' ? transporters : fighters;
+    const pairedIds = excludePaired ? getPairedSignupIds() : new Set<string>();
+    const otherSignups = (attrs.role === 'Fighter' ? transporters : fighters)
+      .filter(s => !excludePaired || !pairedIds.has(s.id));
+    
     return otherSignups.find(s => {
       const otherAttrs = getTransportAttributes(s);
       const playerName = s.expand?.player?.name || '';
@@ -137,6 +132,71 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
              playerName.includes(attrs.preferredPartner) ||
              attrs.preferredPartner.includes(playerName);
     }) || null;
+  };
+
+  const autoPairPreferredMatches = async () => {
+    if (hasAutoPairedPreferred) return;
+    
+    setHasAutoPairedPreferred(true); // Set immediately to prevent multiple runs
+    
+    const pairedIds = getPairedSignupIds();
+    const unpairedFightersList = fighters.filter(s => !pairedIds.has(s.id));
+    
+    const pairsToCreate: Array<{ fighterId: string; transporterId: string }> = [];
+    const usedSignups = new Set<string>();
+
+    // Find all preferred matches (only check unpaired fighters)
+    for (const fighter of unpairedFightersList) {
+      if (usedSignups.has(fighter.id)) continue;
+      
+      const match = getPreferredPartnerMatch(fighter, true); // Exclude already paired
+      if (match && !usedSignups.has(match.id) && !pairedIds.has(match.id)) {
+        // Verify it's a mutual preference (check if transporter also prefers this fighter)
+        const transporterAttrs = getTransportAttributes(match);
+        const fighterName = fighter.expand?.player?.name || '';
+        const transporterPrefers = transporterAttrs?.preferredPartner && (
+          transporterAttrs.preferredPartner.includes(fighterName) ||
+          fighterName.toLowerCase().includes(transporterAttrs.preferredPartner.toLowerCase()) ||
+          transporterAttrs.preferredPartner.toLowerCase().includes(fighterName.toLowerCase())
+        );
+        
+        // Also check if fighter's preferred partner matches transporter's name
+        const fighterAttrs = getTransportAttributes(fighter);
+        const transporterName = match.expand?.player?.name || '';
+        const fighterPrefers = fighterAttrs?.preferredPartner && (
+          fighterAttrs.preferredPartner.includes(transporterName) ||
+          transporterName.toLowerCase().includes(fighterAttrs.preferredPartner.toLowerCase()) ||
+          fighterAttrs.preferredPartner.toLowerCase().includes(transporterName.toLowerCase())
+        );
+        
+        // Pair if either has a preference match
+        if (transporterPrefers || fighterPrefers) {
+          pairsToCreate.push({ fighterId: fighter.id, transporterId: match.id });
+          usedSignups.add(fighter.id);
+          usedSignups.add(match.id);
+        }
+      }
+    }
+
+    // Create pairs for preferred matches
+    if (pairsToCreate.length > 0) {
+      try {
+        setError('');
+        for (const pair of pairsToCreate) {
+          await pairsApi.create({
+            activityId,
+            fighterId: pair.fighterId,
+            transporterId: pair.transporterId,
+          });
+        }
+        await loadPairs();
+        await loadFillAssignments();
+        if (onUpdate) onUpdate();
+      } catch (err: unknown) {
+        console.error('Failed to auto-pair preferred matches:', err);
+        // Don't show error to user, just log it
+      }
+    }
   };
 
   if (loading) {

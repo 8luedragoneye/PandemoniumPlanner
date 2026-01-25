@@ -1,6 +1,6 @@
 import { formatInTimeZone } from 'date-fns-tz';
 import { de } from 'date-fns/locale';
-import { Activity, Signup } from '../types';
+import { Activity, Signup, TransportSignupAttributes } from '../types';
 import { TIMEZONE_CET, DEFAULT_ACTIVITY_DURATION_HOURS } from './constants';
 
 /**
@@ -90,4 +90,37 @@ export function getSignupCount(roleId: string, signups: Signup[]): number {
  */
 export function isRoleFull(roleId: string, slots: number, signups: Signup[]): boolean {
   return getSignupCount(roleId, signups) >= slots;
+}
+
+/**
+ * Get transport attributes from a signup
+ */
+export function getTransportAttributes(signup: Signup): TransportSignupAttributes | null {
+  if (signup.attributes && typeof signup.attributes === 'object') {
+    const attrs = signup.attributes as TransportSignupAttributes;
+    if (attrs.role === 'Fighter' || attrs.role === 'Transporter') {
+      return attrs;
+    }
+  }
+  return null;
+}
+
+/**
+ * Filter signups by transport role
+ */
+export function getFighters(signups: Signup[]): Signup[] {
+  return signups.filter(s => {
+    const attrs = getTransportAttributes(s);
+    return attrs?.role === 'Fighter';
+  });
+}
+
+/**
+ * Filter signups by transport role
+ */
+export function getTransporters(signups: Signup[]): Signup[] {
+  return signups.filter(s => {
+    const attrs = getTransportAttributes(s);
+    return attrs?.role === 'Transporter';
+  });
 }

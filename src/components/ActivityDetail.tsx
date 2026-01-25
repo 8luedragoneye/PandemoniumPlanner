@@ -7,6 +7,7 @@ import { formatDisplayDate, isRoleFull, checkOverlap, isUpcoming } from '../lib/
 import { transformActivity, transformRole, transformSignup, transformPair } from '../lib/transformers';
 import { SignupForm } from './SignupForm';
 import { TransportPairManager } from './TransportPairManager';
+import { AutoPairButton } from './AutoPairButton';
 import { FillProviderManager } from './FillProviderManager';
 import { FillAssignmentManager } from './FillAssignmentManager';
 import { FillProviderRegistration } from './FillProviderRegistration';
@@ -286,7 +287,29 @@ export function ActivityDetail(): JSX.Element {
 
       {/* Management Sections (Owner Only) */}
       {isOwner && isTransport && (
-        <CollapsibleSection title="Transport Pairing" defaultExpanded={false}>
+        <CollapsibleSection 
+          title="Transport Pairing" 
+          defaultExpanded={false}
+          headerActions={
+            <AutoPairButton
+              activityId={activity.id}
+              signups={activitySignups}
+              compact={true}
+              onUpdate={async () => {
+                try {
+                  const signupRecords = await signupsApi.getByActivity(activity.id);
+                  setActivitySignups(signupRecords.map(transformSignup));
+                  const pairRecords = await pairsApi.getByActivity(activity.id);
+                  setPairs(pairRecords.map(transformPair));
+                  refetch();
+                } catch (error) {
+                  console.error('Error refetching:', error);
+                  refetch();
+                }
+              }}
+            />
+          }
+        >
           <TransportPairManager
             activityId={activity.id}
             signups={activitySignups}

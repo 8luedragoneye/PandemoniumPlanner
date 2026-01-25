@@ -27,3 +27,9 @@ dist-ssr
 prisma/dev.db
 prisma/dev.db-journal
 .env
+
+# Obsidian workspace files (keep obsidian/ folder tracked)
+obsidian/.obsidian/workspace.json
+obsidian/.obsidian/workspace-mobile.json
+obsidian/.obsidian/plugins/
+obsidian/.obsidian/themes/

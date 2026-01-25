@@ -1,0 +1,24 @@
+{
+  "legacyEditor": false,
+  "livePreview": true,
+  "showLineNumber": true,
+  "spellcheck": true,
+  "spellcheckLanguages": [
+    "en-US",
+    "de"
+  ],
+  "strictLineBreaks": false,
+  "showIndentGuide": true,
+  "rightToLeft": false,
+  "vimMode": false,
+  "defaultViewMode": "source",
+  "attachmentFolderPath": "attachments",
+  "alwaysUpdateLinks": true,
+  "newFileLocation": "folder",
+  "newFileFolderPath": "00-Inbox",
+  "useMarkdownLinks": true,
+  "readableLineLength": true,
+  "foldHeading": true,
+  "foldIndent": true,
+  "showFrontmatter": true
+}
