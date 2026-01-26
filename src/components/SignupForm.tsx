@@ -25,6 +25,8 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
   const [slots, setSlots] = useState('');
   const [gewicht, setGewicht] = useState('');
   const [preferredPartner, setPreferredPartner] = useState('');
+  const [needGear, setNeedGear] = useState(false);
+  const [gearNeeds, setGearNeeds] = useState('');
   
   // Carleon transport state (second set of fields)
   const [transportFromCarleon, setTransportFromCarleon] = useState(false);
@@ -81,6 +83,7 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
           ...(slots && { slots: parseInt(slots) || 0 }),
           ...(gewicht && { gewicht: parseInt(gewicht) || 0 }),
           ...(preferredPartner && { preferredPartner }),
+          ...(needGear && { gearNeeds: gearNeeds.trim() || 'Yes' }),
           ...(transportFromCarleon && {
             carleonTransport: {
               source: carleonOrigin,
@@ -342,6 +345,50 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
                 style={{ width: '100%' }}
               />
             </div>
+
+            {transportRole === 'Fighter' && (
+              <>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    fontWeight: 600,
+                    color: 'var(--albion-text)',
+                    fontSize: '0.9375rem',
+                    cursor: 'pointer'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={needGear}
+                      onChange={(e) => setNeedGear(e.target.checked)}
+                      style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
+                    />
+                    Need Gear
+                  </label>
+                </div>
+
+                {needGear && (
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{ 
+                      display: 'block', 
+                      marginBottom: '0.5rem',
+                      fontWeight: 600,
+                      color: 'var(--albion-text)',
+                      fontSize: '0.9375rem'
+                    }}>
+                      Gear Needs <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
+                    </label>
+                    <textarea
+                      value={gearNeeds}
+                      onChange={(e) => setGearNeeds(e.target.value)}
+                      placeholder="Describe what gear you need (e.g., T8 Holy Healer set)"
+                      style={{ width: '100%', minHeight: '80px' }}
+                    />
+                  </div>
+                )}
+              </>
+            )}
           </>
         ) : (
           Object.keys(role.attributes).length > 0 && (

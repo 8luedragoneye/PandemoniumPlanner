@@ -336,6 +336,11 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
                                               <strong>Preferred Partner:</strong> {attrs.preferredPartner}
                                             </div>
                                           )}
+                                          {attrs.gearNeeds && (
+                                            <div className="text-dim" style={{ marginBottom: '0.25rem' }}>
+                                              <strong>Gear:</strong> {attrs.gearNeeds}
+                                            </div>
+                                          )}
                                           {attrs.carleonTransport && (
                                             <div className="text-dim" style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--albion-border)' }}>
                                               <strong>Carleon Transport:</strong>

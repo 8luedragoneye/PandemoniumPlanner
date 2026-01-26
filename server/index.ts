@@ -27,8 +27,12 @@ app.use('/api/pairs', pairRoutes);
 app.use('/api/fill-providers', fillProviderRoutes);
 app.use('/api/fill-assignments', fillAssignmentRoutes);
 
-// Health check
+// Health check endpoints
 app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
