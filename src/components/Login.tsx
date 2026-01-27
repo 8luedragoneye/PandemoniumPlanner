@@ -55,7 +55,7 @@ export function Login(): JSX.Element {
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text'
           }}>
-            Pandemonium Planner
+            NOX Planer
           </h1>
           <h2 className="text-dim" style={{ fontSize: '1.125rem', fontWeight: 500 }}>
             {isRegister ? 'Create Account' : 'Welcome Back'}

@@ -1,6 +1,6 @@
 # Deployment Guide - Render.com
 
-This guide explains how to deploy Pandemonium Planner to Render.com as a single service.
+This guide explains how to deploy NOX Planer to Render.com as a single service.
 
 ## Prerequisites
 

@@ -1,6 +1,6 @@
-# Pandemonium Planner
+# NOX Planer
 
-A simple activity organizer for the Albion Online guild **Pandemonium**.
+A simple activity organizer for the Albion Online alliance **Schattenwandler**.
 
 ## Features
 

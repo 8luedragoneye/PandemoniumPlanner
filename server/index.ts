@@ -7,6 +7,7 @@ import signupRoutes from './routes/signups';
 import pairRoutes from './routes/pairs';
 import fillProviderRoutes from './routes/fillProviders';
 import fillAssignmentRoutes from './routes/fillAssignments';
+import premadeActivityRoutes from './routes/premadeActivities';
 import prisma from './lib/prisma';
 import dotenv from 'dotenv';
 
@@ -26,6 +27,7 @@ app.use('/api/signups', signupRoutes);
 app.use('/api/pairs', pairRoutes);
 app.use('/api/fill-providers', fillProviderRoutes);
 app.use('/api/fill-assignments', fillAssignmentRoutes);
+app.use('/api/premade-activities', premadeActivityRoutes);
 
 // Health check endpoints
 app.get('/api/health', (req, res) => {

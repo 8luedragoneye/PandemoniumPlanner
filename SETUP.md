@@ -1,6 +1,6 @@
 # Setup Guide
 
-Quick start guide for Pandemonium Planner.
+Quick start guide for NOX Planer.
 
 ## Prerequisites
 

@@ -13,7 +13,7 @@ Effizient: Das im Folgenden beschriebene System ermöglicht mit geringem Vorbere
 Erschwinglich: Benötigte Ausrüstung kann bei Bedarf geliehen werden.
 
 Organisation
-Planung, Logistik: Schnoozy (Pandemonium)
+Planung, Logistik: Schnoozy (Schattenwandler)
 
 Builds, Caller: WallyWaddles (Sonnenfinsternis)
 

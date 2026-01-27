@@ -3,13 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ActivityFormData, RoleFormData } from '../types';
 import { formatCETDate, formatDateInput, parseDateInput } from '../lib/utils';
-import { activitiesApi, rolesApi } from '../lib/api';
+import { activitiesApi, rolesApi, premadeActivitiesApi } from '../lib/api';
+import type { ApiPremadeActivity } from '../lib/apiTypes';
 
 export function CreateActivity(): JSX.Element {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [templateSuccess, setTemplateSuccess] = useState('');
   const [formData, setFormData] = useState<ActivityFormData>({
     name: '',
     date: '',
@@ -47,11 +50,34 @@ export function CreateActivity(): JSX.Element {
   const [weaponTypeAttr, setWeaponTypeAttr] = useState('');
   const [editingRoleIndex, setEditingRoleIndex] = useState<number | null>(null);
   
+  // Premade activities state
+  const [premadeActivities, setPremadeActivities] = useState<ApiPremadeActivity[]>([]);
+  const [selectedPremadeId, setSelectedPremadeId] = useState<string>('');
+  const [isLoadingPremades, setIsLoadingPremades] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  
   // Initialize formData.date with default datetime
   useEffect(() => {
     if (!formData.date) {
       setFormData(prev => ({ ...prev, date: defaultDateTime }));
     }
+  }, []);
+
+  // Fetch premade activities on mount
+  useEffect(() => {
+    const fetchPremadeActivities = async () => {
+      setIsLoadingPremades(true);
+      try {
+        const premades = await premadeActivitiesApi.getAll();
+        setPremadeActivities(premades);
+      } catch (err) {
+        console.error('Error fetching premade activities:', err);
+      } finally {
+        setIsLoadingPremades(false);
+      }
+    };
+
+    fetchPremadeActivities();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -448,14 +474,502 @@ export function CreateActivity(): JSX.Element {
     setNewAttributeValue('');
   };
 
+  // Load premade activity into form
+  const handleLoadPremade = async (premadeId: string) => {
+    if (!premadeId) {
+      return;
+    }
+
+    try {
+      const premade = await premadeActivitiesApi.getOne(premadeId);
+      
+      // Populate form fields
+      setFormData({
+        name: premade.name,
+        date: formData.date || defaultDateTime, // Keep existing date or use default
+        massupTime: undefined,
+        description: premade.description,
+        zone: premade.zone || '',
+        minEquip: premade.minEquip || undefined,
+      });
+      
+      // Set activity type
+      if (premade.type) {
+        setActivityType(premade.type as 'regular' | 'transport');
+      }
+      
+      // Populate roles
+      if (premade.roles && premade.roles.length > 0) {
+        const loadedRoles: RoleFormData[] = premade.roles.map(role => ({
+          name: role.name,
+          slots: role.slots,
+          attributes: role.attributes || {},
+        }));
+        setRoles(loadedRoles);
+      } else {
+        setRoles([]);
+      }
+      
+      setSelectedPremadeId(premadeId);
+      setShowForm(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load premade activity');
+    }
+  };
+
+  // Handle starting from scratch
+  const handleStartFromScratch = () => {
+    setSelectedPremadeId('');
+    setIsCreatingNewTemplate(false);
+    setFormData({
+      name: '',
+      date: defaultDateTime,
+      massupTime: undefined,
+      description: '',
+      zone: '',
+      minEquip: undefined,
+    });
+    setRoles([]);
+    setActivityType('regular');
+    setShowForm(true);
+  };
+
+
+  // Handle back to template selection
+  const handleBackToSelection = () => {
+    setShowForm(false);
+    setSelectedPremadeId('');
+    setError('');
+    setTemplateSuccess('');
+  };
+
+  // Save current form as template
+  const handleSaveAsTemplate = async () => {
+    if (!formData.name || !formData.description) {
+      setError('Name and description are required to save as template');
+      return;
+    }
+
+    setSavingTemplate(true);
+    setTemplateSuccess('');
+    setError('');
+
+    try {
+      const templateData = {
+        name: formData.name,
+        description: formData.description,
+        zone: formData.zone || undefined,
+        minEquip: formData.minEquip || undefined,
+        type: activityType,
+        roles: roles.length > 0 ? roles.map(role => ({
+          name: role.name,
+          slots: role.slots,
+          attributes: role.attributes,
+        })) : undefined,
+      };
+
+      await premadeActivitiesApi.create(templateData);
+      
+      setTemplateSuccess('Template saved successfully!');
+      
+      // Refresh premade activities list
+      const premades = await premadeActivitiesApi.getAll();
+      setPremadeActivities(premades);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setTemplateSuccess('');
+      }, 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save template');
+    } finally {
+      setSavingTemplate(false);
+    }
+  };
+
+  // Template Selection View
+  if (!showForm) {
+    return (
+      <div style={{ maxWidth: '900px', margin: '2rem auto', padding: '2rem' }}>
+        <div className="card">
+          <h1 className="card-title" style={{ marginBottom: '2rem' }}>
+            Create New Activity
+          </h1>
+
+          <div style={{ marginBottom: '2rem' }}>
+            <p style={{ 
+              color: 'var(--albion-text-dim)', 
+              fontSize: '0.9375rem',
+              marginBottom: '1.5rem'
+            }}>
+              Choose a template to get started, or create a new activity from scratch.
+            </p>
+
+            {/* Start from scratch option */}
+            <div
+              onClick={handleStartFromScratch}
+              style={{
+                padding: '1.5rem',
+                backgroundColor: 'var(--albion-darker)',
+                border: '2px solid var(--albion-border)',
+                borderRadius: '12px',
+                marginBottom: '1rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--albion-gold)';
+                e.currentTarget.style.backgroundColor = 'rgba(212, 175, 55, 0.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--albion-border)';
+                e.currentTarget.style.backgroundColor = 'var(--albion-darker)';
+              }}
+            >
+              <div style={{
+                width: '3rem',
+                height: '3rem',
+                borderRadius: '8px',
+                backgroundColor: 'var(--albion-dark)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.5rem',
+                color: 'var(--albion-gold)',
+                flexShrink: 0
+              }}>
+                +
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ 
+                  margin: 0, 
+                  marginBottom: '0.25rem',
+                  color: 'var(--albion-text)',
+                  fontSize: '1.125rem',
+                  fontWeight: 600
+                }}>
+                  Start from Scratch
+                </h3>
+                <p style={{ 
+                  margin: 0,
+                  color: 'var(--albion-text-dim)', 
+                  fontSize: '0.875rem'
+                }}>
+                  Create a new activity without using a template
+                </p>
+              </div>
+            </div>
+
+            {/* Available Templates */}
+            {premadeActivities.length > 0 && (
+              <div>
+                <h2 style={{ 
+                  color: 'var(--albion-gold)',
+                  fontSize: '1.125rem',
+                  fontWeight: 600,
+                  marginBottom: '1rem'
+                }}>
+                  Available Templates
+                </h2>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                  gap: '1rem'
+                }}>
+                  {premadeActivities.map(premade => (
+                    <div
+                      key={premade.id}
+                      onClick={() => handleLoadPremade(premade.id)}
+                      style={{
+                        padding: '1.25rem',
+                        backgroundColor: 'var(--albion-darker)',
+                        border: '2px solid var(--albion-border)',
+                        borderRadius: '12px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--albion-gold)';
+                        e.currentTarget.style.backgroundColor = 'rgba(212, 175, 55, 0.05)';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--albion-border)';
+                        e.currentTarget.style.backgroundColor = 'var(--albion-darker)';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between',
+                        marginBottom: '0.75rem'
+                      }}>
+                        <h3 style={{ 
+                          margin: 0,
+                          color: 'var(--albion-text)',
+                          fontSize: '1rem',
+                          fontWeight: 600
+                        }}>
+                          {premade.name}
+                        </h3>
+                        {premade.type && (
+                          <span style={{
+                            padding: '0.25rem 0.75rem',
+                            backgroundColor: 'var(--albion-dark)',
+                            borderRadius: '4px',
+                            fontSize: '0.75rem',
+                            color: 'var(--albion-text-dim)',
+                            textTransform: 'capitalize'
+                          }}>
+                            {premade.type}
+                          </span>
+                        )}
+                      </div>
+                      <p style={{ 
+                        margin: 0,
+                        marginBottom: '0.75rem',
+                        color: 'var(--albion-text-dim)', 
+                        fontSize: '0.875rem',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
+                      }}>
+                        {premade.description}
+                      </p>
+                      {premade.roles && premade.roles.length > 0 && (
+                        <div style={{ 
+                          display: 'flex', 
+                          gap: '0.5rem', 
+                          flexWrap: 'wrap',
+                          marginTop: '0.75rem',
+                          paddingTop: '0.75rem',
+                          borderTop: '1px solid var(--albion-border)'
+                        }}>
+                          {premade.roles.slice(0, 3).map((role, idx) => (
+                            <span key={idx} style={{
+                              padding: '0.25rem 0.5rem',
+                              backgroundColor: 'var(--albion-dark)',
+                              borderRadius: '4px',
+                              fontSize: '0.75rem',
+                              color: 'var(--albion-text-dim)'
+                            }}>
+                              {role.name} ({role.slots})
+                            </span>
+                          ))}
+                          {premade.roles.length > 3 && (
+                            <span style={{
+                              padding: '0.25rem 0.5rem',
+                              backgroundColor: 'var(--albion-dark)',
+                              borderRadius: '4px',
+                              fontSize: '0.75rem',
+                              color: 'var(--albion-text-dim)'
+                            }}>
+                              +{premade.roles.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {isLoadingPremades && (
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--albion-text-dim)' }}>
+                Loading templates...
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Form View
   return (
     <div style={{ maxWidth: '800px', margin: '2rem auto', padding: '2rem' }}>
       <div className="card">
-        <h1 className="card-title" style={{ marginBottom: '2rem' }}>
-          Create New Activity
-        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
+          <h1 className="card-title" style={{ margin: 0 }}>
+            Create New Activity
+          </h1>
+          <button
+            type="button"
+            onClick={handleBackToSelection}
+            className="btn-secondary"
+            style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+          >
+            ← Back
+          </button>
+        </div>
+
+        {selectedPremadeId && (
+          <div style={{ 
+            marginBottom: '1.5rem',
+            padding: '1rem',
+            backgroundColor: 'rgba(212, 175, 55, 0.1)',
+            border: '1px solid rgba(212, 175, 55, 0.3)',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <span style={{ fontSize: '1rem', color: 'var(--albion-gold)' }}>✓</span>
+            <p style={{ 
+              margin: 0,
+              fontSize: '0.875rem', 
+              color: 'var(--albion-text)',
+              fontWeight: 500
+            }}>
+              Using template: <strong>{premadeActivities.find(p => p.id === selectedPremadeId)?.name}</strong>
+            </p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
+          {/* Removed Premade Activity Selection - now handled in first step */}
+          {false && premadeActivities.length > 0 && (
+            <div style={{ 
+              marginBottom: '2.5rem', 
+              padding: '1.75rem',
+              backgroundColor: 'var(--albion-darker)',
+              borderRadius: '12px',
+              border: '2px solid var(--albion-border)',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+            }}>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                marginBottom: '1rem'
+              }}>
+                <label style={{ 
+                  display: 'block', 
+                  margin: 0,
+                  fontWeight: 600,
+                  color: 'var(--albion-gold)',
+                  fontSize: '1rem',
+                  letterSpacing: '0.025em'
+                }}>
+                  Quick Start from Template
+                </label>
+                {selectedPremadeId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedPremadeId('');
+                      setFormData({
+                        name: '',
+                        date: defaultDateTime,
+                        massupTime: undefined,
+                        description: '',
+                        zone: '',
+                        minEquip: undefined,
+                      });
+                      setRoles([]);
+                      setActivityType('regular');
+                    }}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      backgroundColor: 'transparent',
+                      border: '1px solid var(--albion-border)',
+                      borderRadius: '6px',
+                      color: 'var(--albion-text-dim)',
+                      cursor: 'pointer',
+                      fontSize: '0.8125rem',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--albion-red)';
+                      e.currentTarget.style.color = 'var(--albion-red)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--albion-border)';
+                      e.currentTarget.style.color = 'var(--albion-text-dim)';
+                    }}
+                  >
+                    Clear Template
+                  </button>
+                )}
+              </div>
+              <select
+                value={selectedPremadeId}
+                onChange={(e) => {
+                  setSelectedPremadeId(e.target.value);
+                  if (e.target.value) {
+                    handleLoadPremade(e.target.value);
+                  }
+                }}
+                disabled={isLoadingPremades}
+                style={{ 
+                  width: '100%',
+                  padding: '0.875rem 1rem',
+                  backgroundColor: 'var(--albion-dark)',
+                  border: '2px solid var(--albion-border)',
+                  borderRadius: '8px',
+                  color: 'var(--albion-text)',
+                  fontSize: '0.9375rem',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  appearance: 'none',
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d4af37' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 1rem center',
+                  paddingRight: '2.5rem'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--albion-gold)';
+                }}
+                onMouseLeave={(e) => {
+                  if (!selectedPremadeId) {
+                    e.currentTarget.style.borderColor = 'var(--albion-border)';
+                  }
+                }}
+              >
+                <option value="" style={{ padding: '0.5rem' }}>Start from scratch</option>
+                {premadeActivities.map(premade => (
+                  <option key={premade.id} value={premade.id} style={{ padding: '0.5rem' }}>
+                    {premade.name} {premade.type ? `(${premade.type})` : ''}
+                  </option>
+                ))}
+              </select>
+              {selectedPremadeId && (
+                <div style={{ 
+                  marginTop: '1rem', 
+                  padding: '0.875rem',
+                  backgroundColor: 'rgba(212, 175, 55, 0.1)',
+                  border: '1px solid rgba(212, 175, 55, 0.3)',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  <span style={{ 
+                    fontSize: '1rem',
+                    color: 'var(--albion-gold)'
+                  }}>✓</span>
+                  <p style={{ 
+                    margin: 0,
+                    fontSize: '0.875rem', 
+                    color: 'var(--albion-text)',
+                    fontWeight: 500
+                  }}>
+                    Template loaded. You can modify any fields before creating the activity.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ 
               display: 'block', 
@@ -1076,18 +1590,45 @@ export function CreateActivity(): JSX.Element {
             </div>
           )}
 
+          {templateSuccess && (
+            <div style={{ 
+              color: 'var(--albion-gold)', 
+              marginBottom: '1.5rem',
+              padding: '1rem',
+              backgroundColor: 'rgba(212, 175, 55, 0.15)',
+              borderRadius: '12px',
+              border: '1px solid rgba(212, 175, 55, 0.3)',
+              fontWeight: 500
+            }}>
+              {templateSuccess}
+            </div>
+          )}
+
           <div className="flex" style={{ gap: '1rem', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--albion-border)' }}>
             <button 
               type="submit" 
               className="btn-primary"
-              disabled={loading}
+              disabled={loading || savingTemplate}
             >
               {loading ? 'Creating...' : 'Create Activity'}
             </button>
             <button
               type="button"
               className="btn-secondary"
+              onClick={handleSaveAsTemplate}
+              disabled={loading || savingTemplate || !formData.name || !formData.description}
+              style={{
+                opacity: (!formData.name || !formData.description) ? 0.5 : 1,
+                cursor: (!formData.name || !formData.description) ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {savingTemplate ? 'Saving...' : 'Save as Template'}
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
               onClick={() => navigate('/')}
+              disabled={loading || savingTemplate}
             >
               Cancel
             </button>

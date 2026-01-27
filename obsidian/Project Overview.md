@@ -1,8 +1,8 @@
 # Project Overview
 
-## What is Pandemonium Planner?
+## What is NOX Planer?
 
-Pandemonium Planner is an activity organizer for the Albion Online guild **Pandemonium**. It helps guild members organize activities, manage sign-ups, and coordinate transport runs.
+NOX Planer is an activity organizer for the Albion Online alliance **Schattenwandler**. It helps alliance members organize activities, manage sign-ups, and coordinate transport runs.
 
 ## Core Features
 

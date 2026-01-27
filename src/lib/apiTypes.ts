@@ -133,3 +133,27 @@ export interface ApiFillAssignment {
   provider?: ApiFillProvider;
   pair?: ApiTransportPair;
 }
+
+export interface ApiPremadeRole {
+  id: string;
+  premadeActivityId: string;
+  name: string;
+  slots: number;
+  attributes: Record<string, unknown>; // Parsed JSON object
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApiPremadeActivity {
+  id: string;
+  name: string;
+  description: string;
+  type: string | null; // regular, transport
+  zone: string | null;
+  minEquip: string | null; // T4, T5, T6, T7, T8, T9, T10, T11
+  creatorId: string;
+  createdAt: string;
+  updatedAt: string;
+  creator?: ApiUser;
+  roles?: ApiPremadeRole[];
+}

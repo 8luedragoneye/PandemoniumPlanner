@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The transport system manages organized transport runs from Lymhurst to Carleon and back for the Albion Online guild Pandemonium.
+The transport system manages organized transport runs from Lymhurst to Carleon and back for the Albion Online alliance Schattenwandler.
 
 ## Key Concepts
 

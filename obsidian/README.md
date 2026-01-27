@@ -1,11 +1,11 @@
-# Pandemonium Planner - Obsidian Vault
+# NOX Planer - Obsidian Vault
 
-Welcome to the Obsidian documentation vault for the Pandemonium Planner project.
+Welcome to the Obsidian documentation vault for the NOX Planer project.
 
 ## 📁 Folder Structure
 
 - **[[00-Inbox]]** - Quick notes, ideas, and temporary items
-- **[[01-Planning]]** - Features, roadmap, and project planning
+- **[[01-Planning]]** - Features, roadmap, project planning, and todo list
 - **[[02-Architecture]]** - Technical architecture and design decisions
 - **[[03-Documentation]]** - User guides, setup instructions, and reference docs
 - **[[04-Notes]]** - Meeting notes, discussions, and brainstorming

@@ -40,7 +40,7 @@ export function Layout({ children }: LayoutProps): JSX.Element {
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text'
             }}>
-              Pandemonium Planner
+              NOX Planer
             </h1>
           </Link>
           <div className="flex" style={{ gap: '1.25rem', alignItems: 'center' }}>

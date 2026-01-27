@@ -1,4 +1,4 @@
-import type { ApiActivity, ApiRole, ApiSignup, ApiUser, AuthResponse, ApiError, ApiTransportPair, ApiFillProvider, ApiFillAssignment } from './apiTypes';
+import type { ApiActivity, ApiRole, ApiSignup, ApiUser, AuthResponse, ApiError, ApiTransportPair, ApiFillProvider, ApiFillAssignment, ApiPremadeActivity, ApiPremadeRole } from './apiTypes';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -316,6 +316,59 @@ export const fillAssignmentsApi = {
 
   delete: async (id: string): Promise<{ message: string }> => {
     return request<{ message: string }>(`/fill-assignments/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// Premade Activities API
+export const premadeActivitiesApi = {
+  getAll: async (): Promise<ApiPremadeActivity[]> => {
+    return request<ApiPremadeActivity[]>('/premade-activities');
+  },
+
+  getOne: async (id: string): Promise<ApiPremadeActivity> => {
+    return request<ApiPremadeActivity>(`/premade-activities/${id}`);
+  },
+
+  create: async (data: {
+    name: string;
+    description: string;
+    zone?: string;
+    minEquip?: string;
+    type?: 'regular' | 'transport';
+    roles?: Array<{
+      name: string;
+      slots: number;
+      attributes?: Record<string, unknown>;
+    }>;
+  }): Promise<ApiPremadeActivity> => {
+    return request<ApiPremadeActivity>('/premade-activities', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  update: async (id: string, data: {
+    name?: string;
+    description?: string;
+    zone?: string;
+    minEquip?: string;
+    type?: 'regular' | 'transport';
+    roles?: Array<{
+      name: string;
+      slots: number;
+      attributes?: Record<string, unknown>;
+    }>;
+  }): Promise<ApiPremadeActivity> => {
+    return request<ApiPremadeActivity>(`/premade-activities/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  delete: async (id: string): Promise<{ message: string }> => {
+    return request<{ message: string }>(`/premade-activities/${id}`, {
       method: 'DELETE',
     });
   },

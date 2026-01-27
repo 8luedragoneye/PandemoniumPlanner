@@ -2,7 +2,7 @@
 
 ## Overview
 
-Pandemonium Planner can be deployed to Render.com or similar platforms.
+NOX Planer can be deployed to Render.com or similar platforms.
 
 ## Prerequisites
 

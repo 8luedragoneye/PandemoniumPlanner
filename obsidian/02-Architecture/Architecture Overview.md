@@ -2,7 +2,7 @@
 
 ## System Overview
 
-Pandemonium Planner follows a traditional client-server architecture with a React frontend and Express.js backend.
+NOX Planer follows a traditional client-server architecture with a React frontend and Express.js backend.
 
 ## Frontend Architecture
 
