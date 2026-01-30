@@ -3,8 +3,9 @@
 ## 🔥 High Priority
 
 
-- [ ] Premade activities feature
+
 - [ ] Auth by Albion API guild/player names ([API Reference](https://www.tools4albion.com/api_info.php))
+ -[ ] add and sort by acivity type zb pve pvp ganking arena ...
 
 ## 📝 Low Priority
 
@@ -14,7 +15,7 @@
 ## ✅ Completed
 
 - [x] Rename to "NOX Planer" (rebranding)
-
+- [x] Premade activities feature
 ## Related
 
 - [[Backlog]]
