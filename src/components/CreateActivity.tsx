@@ -55,6 +55,7 @@ export function CreateActivity(): JSX.Element {
   const [selectedPremadeId, setSelectedPremadeId] = useState<string>('');
   const [isLoadingPremades, setIsLoadingPremades] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [isCreatingNewTemplate, setIsCreatingNewTemplate] = useState(false);
   
   // Initialize formData.date with default datetime
   useEffect(() => {

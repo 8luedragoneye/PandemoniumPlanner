@@ -5,7 +5,7 @@ dotenv.config();
 
 // Set default DATABASE_URL if not provided
 if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = 'file:./prisma/dev.db';
+  process.env.DATABASE_URL = 'file:./dev.db';
 }
 
 // Shared Prisma client instance (singleton pattern)
