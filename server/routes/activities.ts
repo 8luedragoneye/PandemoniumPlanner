@@ -2,7 +2,7 @@ import express from 'express';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';
 import { handleError, handleNotFound, handleUnauthorized, handleValidationError } from '../lib/errorHandler';
-import { ACTIVITY_CLEANUP_HOURS, ACTIVITY_TYPES } from '../lib/constants';
+import { ACTIVITY_CLEANUP_HOURS, ALL_VALID_TAGS } from '../lib/constants';
 
 const router = express.Router();
 
@@ -102,7 +102,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     let validatedActivityTypes: string[] = [];
     if (activityTypes && Array.isArray(activityTypes)) {
       validatedActivityTypes = activityTypes.filter((t: string) => 
-        ACTIVITY_TYPES.includes(t as typeof ACTIVITY_TYPES[number])
+        ALL_VALID_TAGS.includes(t as typeof ALL_VALID_TAGS[number])
       );
     }
 
@@ -157,7 +157,7 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
     let activityTypesData: { activityTypes: string } | undefined;
     if (activityTypes !== undefined) {
       const validatedActivityTypes = Array.isArray(activityTypes) 
-        ? activityTypes.filter((t: string) => ACTIVITY_TYPES.includes(t as typeof ACTIVITY_TYPES[number]))
+        ? activityTypes.filter((t: string) => ALL_VALID_TAGS.includes(t as typeof ALL_VALID_TAGS[number]))
         : [];
       activityTypesData = { activityTypes: JSON.stringify(validatedActivityTypes) };
     }

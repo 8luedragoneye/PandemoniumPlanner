@@ -6,7 +6,7 @@ import { Activity } from '../types';
 import { isPast, isUpcoming } from '../lib/utils';
 import { ActivityCard } from './ActivityCard';
 import { FilterButtons } from './FilterButtons';
-import { ACTIVITY_TYPES } from '../lib/constants';
+import { ACTIVITY_TYPE_CATEGORIES, META_TAGS } from '../lib/constants';
 
 type FilterType = 'all' | 'my-activities' | 'signed-up' | 'upcoming' | 'past';
 
@@ -110,7 +110,7 @@ export function ActivityList(): JSX.Element {
       }}>
         <div className="card" style={{ padding: '1.25rem' }}>
           <h3 style={{ 
-            marginBottom: '1rem',
+            marginBottom: '0.75rem',
             color: 'var(--albion-gold)',
             fontSize: '1rem',
             fontWeight: 600
@@ -120,41 +120,103 @@ export function ActivityList(): JSX.Element {
           <p style={{ fontSize: '0.75rem', color: 'var(--albion-text-dim)', marginBottom: '1rem' }}>
             Shows activities matching ANY selected type
           </p>
+          
+          {/* Meta tags (PvE/PvP) filter */}
+          <div style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--albion-border)' }}>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              {META_TAGS.map((tag) => (
+                <label
+                  key={tag}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.375rem',
+                    padding: '0.4rem 0.75rem',
+                    backgroundColor: selectedTypeFilters.includes(tag) 
+                      ? (tag === 'PvE' ? 'rgba(46, 204, 113, 0.2)' : 'rgba(231, 76, 60, 0.2)') 
+                      : 'var(--albion-darker)',
+                    border: selectedTypeFilters.includes(tag) 
+                      ? `1px solid ${tag === 'PvE' ? '#2ecc71' : '#e74c3c'}` 
+                      : '1px solid var(--albion-border)',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                    fontSize: '0.8125rem',
+                    flex: 1,
+                    justifyContent: 'center'
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedTypeFilters.includes(tag)}
+                    onChange={() => handleTypeFilterToggle(tag)}
+                    style={{ width: '0.8rem', height: '0.8rem', cursor: 'pointer' }}
+                  />
+                  <span style={{ 
+                    color: selectedTypeFilters.includes(tag) 
+                      ? (tag === 'PvE' ? '#2ecc71' : '#e74c3c') 
+                      : 'var(--albion-text)',
+                    fontWeight: 600
+                  }}>
+                    {tag}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.375rem',
-            maxHeight: '500px',
+            gap: '1rem',
+            maxHeight: '400px',
             overflowY: 'auto'
           }}>
-            {ACTIVITY_TYPES.map((type) => (
-              <label
-                key={type}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.5rem 0.75rem',
-                  backgroundColor: selectedTypeFilters.includes(type) ? 'rgba(212, 175, 55, 0.15)' : 'var(--albion-darker)',
-                  border: selectedTypeFilters.includes(type) ? '1px solid var(--albion-gold)' : '1px solid var(--albion-border)',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                  fontSize: '0.8125rem'
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedTypeFilters.includes(type)}
-                  onChange={() => handleTypeFilterToggle(type)}
-                  style={{ width: '0.875rem', height: '0.875rem', cursor: 'pointer' }}
-                />
-                <span style={{ color: selectedTypeFilters.includes(type) ? 'var(--albion-gold)' : 'var(--albion-text)' }}>
-                  {type}
-                </span>
-              </label>
+            {Object.entries(ACTIVITY_TYPE_CATEGORIES).map(([category, types]) => (
+              <div key={category}>
+                <h4 style={{ 
+                  fontSize: '0.7rem', 
+                  color: category.includes('PvE') && !category.includes('PvP') ? '#2ecc71' : category.includes('PvP') && !category.includes('PvE') ? '#e74c3c' : 'var(--albion-gold)',
+                  fontWeight: 600,
+                  marginBottom: '0.5rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  {category}
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {types.map((type) => (
+                    <label
+                      key={type}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.35rem 0.5rem',
+                        backgroundColor: selectedTypeFilters.includes(type) ? 'rgba(212, 175, 55, 0.15)' : 'var(--albion-darker)',
+                        border: selectedTypeFilters.includes(type) ? '1px solid var(--albion-gold)' : '1px solid var(--albion-border)',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedTypeFilters.includes(type)}
+                        onChange={() => handleTypeFilterToggle(type)}
+                        style={{ width: '0.75rem', height: '0.75rem', cursor: 'pointer' }}
+                      />
+                      <span style={{ color: selectedTypeFilters.includes(type) ? 'var(--albion-gold)' : 'var(--albion-text)' }}>
+                        {type}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
+          
           {selectedTypeFilters.length > 0 && (
             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--albion-border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
@@ -180,15 +242,15 @@ export function ActivityList(): JSX.Element {
                   <span
                     key={type}
                     style={{
-                      padding: '0.25rem 0.5rem',
-                      backgroundColor: 'var(--albion-gold)',
-                      color: 'var(--albion-darker)',
-                      borderRadius: '10px',
-                      fontSize: '0.6875rem',
+                      padding: '0.2rem 0.4rem',
+                      backgroundColor: type === 'PvE' ? 'rgba(46, 204, 113, 0.3)' : type === 'PvP' ? 'rgba(231, 76, 60, 0.3)' : 'var(--albion-gold)',
+                      color: type === 'PvE' ? '#2ecc71' : type === 'PvP' ? '#e74c3c' : 'var(--albion-darker)',
+                      borderRadius: '8px',
+                      fontSize: '0.625rem',
                       fontWeight: 600,
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.375rem'
+                      gap: '0.25rem'
                     }}
                   >
                     {type}
@@ -197,10 +259,10 @@ export function ActivityList(): JSX.Element {
                       style={{
                         background: 'none',
                         border: 'none',
-                        color: 'var(--albion-darker)',
+                        color: type === 'PvE' ? '#2ecc71' : type === 'PvP' ? '#e74c3c' : 'var(--albion-darker)',
                         cursor: 'pointer',
                         padding: 0,
-                        fontSize: '0.875rem',
+                        fontSize: '0.75rem',
                         lineHeight: 1
                       }}
                     >

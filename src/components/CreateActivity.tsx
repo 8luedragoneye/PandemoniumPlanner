@@ -5,7 +5,7 @@ import { ActivityFormData, RoleFormData } from '../types';
 import { formatCETDate, formatDateInput, parseDateInput } from '../lib/utils';
 import { activitiesApi, rolesApi, premadeActivitiesApi } from '../lib/api';
 import type { ApiPremadeActivity } from '../lib/apiTypes';
-import { ACTIVITY_TYPES } from '../lib/constants';
+import { ACTIVITY_TYPE_CATEGORIES, getAutoAssignedMetaTags } from '../lib/constants';
 
 export function CreateActivity(): JSX.Element {
   const { user } = useAuth();
@@ -110,6 +110,10 @@ export function CreateActivity(): JSX.Element {
         massupTime = formatCETDate(massupDate).replace(' ', 'T');
       }
 
+      // Combine selected types with auto-assigned meta tags
+      const autoMetaTags = getAutoAssignedMetaTags(selectedActivityTypes);
+      const allActivityTypes = [...selectedActivityTypes, ...autoMetaTags];
+
       const activity = await activitiesApi.create({
         name: formData.name,
         date: formData.date,
@@ -118,7 +122,7 @@ export function CreateActivity(): JSX.Element {
         zone: formData.zone || undefined,
         minEquip: formData.minEquip || undefined,
         type: activityType,
-        activityTypes: selectedActivityTypes,
+        activityTypes: allActivityTypes,
       });
 
       // Create all roles if any were added
@@ -810,7 +814,7 @@ export function CreateActivity(): JSX.Element {
       }}>
         <div className="card" style={{ padding: '1.25rem' }}>
           <h3 style={{ 
-            marginBottom: '1rem',
+            marginBottom: '0.75rem',
             color: 'var(--albion-gold)',
             fontSize: '1rem',
             fontWeight: 600
@@ -818,49 +822,99 @@ export function CreateActivity(): JSX.Element {
             Activity Tags
           </h3>
           <p style={{ fontSize: '0.75rem', color: 'var(--albion-text-dim)', marginBottom: '1rem' }}>
-            Select tags to categorize this activity
+            PvE/PvP auto-assigned based on selection
           </p>
+          
+          {/* Auto-assigned meta tags display */}
+          {selectedActivityTypes.length > 0 && (
+            <div style={{ 
+              marginBottom: '1rem', 
+              padding: '0.5rem 0.75rem', 
+              backgroundColor: 'rgba(212, 175, 55, 0.1)', 
+              borderRadius: '6px',
+              border: '1px solid rgba(212, 175, 55, 0.3)'
+            }}>
+              <span style={{ fontSize: '0.6875rem', color: 'var(--albion-text-dim)', display: 'block', marginBottom: '0.375rem' }}>
+                Auto-assigned:
+              </span>
+              <div style={{ display: 'flex', gap: '0.375rem' }}>
+                {getAutoAssignedMetaTags(selectedActivityTypes).map(tag => (
+                  <span
+                    key={tag}
+                    style={{
+                      padding: '0.25rem 0.5rem',
+                      backgroundColor: tag === 'PvE' ? 'rgba(46, 204, 113, 0.2)' : 'rgba(231, 76, 60, 0.2)',
+                      color: tag === 'PvE' ? '#2ecc71' : '#e74c3c',
+                      borderRadius: '4px',
+                      fontSize: '0.6875rem',
+                      fontWeight: 600
+                    }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.375rem',
-            maxHeight: '500px',
+            gap: '1rem',
+            maxHeight: '450px',
             overflowY: 'auto'
           }}>
-            {ACTIVITY_TYPES.map((type) => (
-              <label
-                key={type}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.5rem 0.75rem',
-                  backgroundColor: selectedActivityTypes.includes(type) ? 'rgba(212, 175, 55, 0.15)' : 'var(--albion-darker)',
-                  border: selectedActivityTypes.includes(type) ? '1px solid var(--albion-gold)' : '1px solid var(--albion-border)',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                  fontSize: '0.8125rem'
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedActivityTypes.includes(type)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedActivityTypes([...selectedActivityTypes, type]);
-                    } else {
-                      setSelectedActivityTypes(selectedActivityTypes.filter(t => t !== type));
-                    }
-                  }}
-                  style={{ width: '0.875rem', height: '0.875rem', cursor: 'pointer' }}
-                />
-                <span style={{ color: selectedActivityTypes.includes(type) ? 'var(--albion-gold)' : 'var(--albion-text)' }}>
-                  {type}
-                </span>
-              </label>
+            {Object.entries(ACTIVITY_TYPE_CATEGORIES).map(([category, types]) => (
+              <div key={category}>
+                <h4 style={{ 
+                  fontSize: '0.75rem', 
+                  color: category.includes('PvE') && !category.includes('PvP') ? '#2ecc71' : category.includes('PvP') && !category.includes('PvE') ? '#e74c3c' : 'var(--albion-gold)',
+                  fontWeight: 600,
+                  marginBottom: '0.5rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  {category}
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {types.map((type) => (
+                    <label
+                      key={type}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.4rem 0.6rem',
+                        backgroundColor: selectedActivityTypes.includes(type) ? 'rgba(212, 175, 55, 0.15)' : 'var(--albion-darker)',
+                        border: selectedActivityTypes.includes(type) ? '1px solid var(--albion-gold)' : '1px solid var(--albion-border)',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedActivityTypes.includes(type)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedActivityTypes([...selectedActivityTypes, type]);
+                          } else {
+                            setSelectedActivityTypes(selectedActivityTypes.filter(t => t !== type));
+                          }
+                        }}
+                        style={{ width: '0.8rem', height: '0.8rem', cursor: 'pointer' }}
+                      />
+                      <span style={{ color: selectedActivityTypes.includes(type) ? 'var(--albion-gold)' : 'var(--albion-text)' }}>
+                        {type}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
+          
           {selectedActivityTypes.length > 0 && (
             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--albion-border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
@@ -887,15 +941,15 @@ export function CreateActivity(): JSX.Element {
                   <span
                     key={type}
                     style={{
-                      padding: '0.25rem 0.5rem',
+                      padding: '0.2rem 0.4rem',
                       backgroundColor: 'var(--albion-gold)',
                       color: 'var(--albion-darker)',
-                      borderRadius: '10px',
-                      fontSize: '0.6875rem',
+                      borderRadius: '8px',
+                      fontSize: '0.625rem',
                       fontWeight: 600,
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.375rem'
+                      gap: '0.25rem'
                     }}
                   >
                     {type}
@@ -908,7 +962,7 @@ export function CreateActivity(): JSX.Element {
                         color: 'var(--albion-darker)',
                         cursor: 'pointer',
                         padding: 0,
-                        fontSize: '0.875rem',
+                        fontSize: '0.75rem',
                         lineHeight: 1
                       }}
                     >

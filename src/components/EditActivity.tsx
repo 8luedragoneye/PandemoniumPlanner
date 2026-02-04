@@ -6,7 +6,7 @@ import { formatCETDate, formatDateInput, parseDateInput } from '../lib/utils';
 import { transformActivity, transformRole, transformSignup } from '../lib/transformers';
 import { activitiesApi, rolesApi, signupsApi } from '../lib/api';
 import { RoleManager } from './RoleManager';
-import { ACTIVITY_TYPES } from '../lib/constants';
+import { ACTIVITY_TYPE_CATEGORIES, getAutoAssignedMetaTags } from '../lib/constants';
 
 export function EditActivity(): JSX.Element {
   const { id } = useParams<{ id: string }>();
@@ -122,6 +122,10 @@ export function EditActivity(): JSX.Element {
         massupTime = formatCETDate(massupDate).replace(' ', 'T');
       }
 
+      // Combine selected types with auto-assigned meta tags
+      const autoMetaTags = getAutoAssignedMetaTags(selectedActivityTypes);
+      const allActivityTypes = [...selectedActivityTypes, ...autoMetaTags];
+
       await activitiesApi.update(activity.id, {
         name: formData.name,
         date: formData.date,
@@ -129,7 +133,7 @@ export function EditActivity(): JSX.Element {
         description: formData.description,
         zone: formData.zone || undefined,
         minEquip: formData.minEquip || undefined,
-        activityTypes: selectedActivityTypes,
+        activityTypes: allActivityTypes,
       });
       navigate('/');
     } catch (err: unknown) {
@@ -631,68 +635,115 @@ export function EditActivity(): JSX.Element {
               color: 'var(--albion-text)',
               fontSize: '0.9375rem'
             }}>
-              Activity Tags <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional, select multiple)</span>
+              Activity Tags <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(PvE/PvP auto-assigned)</span>
             </label>
+            
+            {/* Auto-assigned meta tags display */}
+            {selectedActivityTypes.length > 0 && (
+              <div style={{ 
+                marginBottom: '1rem', 
+                padding: '0.5rem 0.75rem', 
+                backgroundColor: 'rgba(212, 175, 55, 0.1)', 
+                borderRadius: '6px',
+                border: '1px solid rgba(212, 175, 55, 0.3)'
+              }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--albion-text-dim)', marginRight: '0.5rem' }}>
+                  Auto-assigned:
+                </span>
+                {getAutoAssignedMetaTags(selectedActivityTypes).map(tag => (
+                  <span
+                    key={tag}
+                    style={{
+                      padding: '0.25rem 0.5rem',
+                      backgroundColor: tag === 'PvE' ? 'rgba(46, 204, 113, 0.2)' : 'rgba(231, 76, 60, 0.2)',
+                      color: tag === 'PvE' ? '#2ecc71' : '#e74c3c',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      marginRight: '0.5rem'
+                    }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-              gap: '0.5rem',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '1rem',
               padding: '1rem',
               backgroundColor: 'var(--albion-darker)',
               borderRadius: '8px',
-              border: '1px solid var(--albion-border)',
-              maxHeight: '300px',
-              overflowY: 'auto'
+              border: '1px solid var(--albion-border)'
             }}>
-              {ACTIVITY_TYPES.map((type) => (
-                <label
-                  key={type}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.5rem 0.75rem',
-                    backgroundColor: selectedActivityTypes.includes(type) ? 'rgba(212, 175, 55, 0.15)' : 'var(--albion-dark)',
-                    border: selectedActivityTypes.includes(type) ? '1px solid var(--albion-gold)' : '1px solid var(--albion-border)',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s',
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedActivityTypes.includes(type)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedActivityTypes([...selectedActivityTypes, type]);
-                      } else {
-                        setSelectedActivityTypes(selectedActivityTypes.filter(t => t !== type));
-                      }
-                    }}
-                    style={{ width: '1rem', height: '1rem', cursor: 'pointer' }}
-                  />
-                  <span style={{ color: selectedActivityTypes.includes(type) ? 'var(--albion-gold)' : 'var(--albion-text)' }}>
-                    {type}
-                  </span>
-                </label>
+              {Object.entries(ACTIVITY_TYPE_CATEGORIES).map(([category, types]) => (
+                <div key={category}>
+                  <h4 style={{ 
+                    fontSize: '0.75rem', 
+                    color: category.includes('PvE') && !category.includes('PvP') ? '#2ecc71' : category.includes('PvP') && !category.includes('PvE') ? '#e74c3c' : 'var(--albion-gold)',
+                    fontWeight: 600,
+                    marginBottom: '0.5rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}>
+                    {category}
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    {types.map((type) => (
+                      <label
+                        key={type}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.4rem 0.6rem',
+                          backgroundColor: selectedActivityTypes.includes(type) ? 'rgba(212, 175, 55, 0.15)' : 'var(--albion-dark)',
+                          border: selectedActivityTypes.includes(type) ? '1px solid var(--albion-gold)' : '1px solid var(--albion-border)',
+                          borderRadius: '5px',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                          fontSize: '0.8125rem'
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedActivityTypes.includes(type)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedActivityTypes([...selectedActivityTypes, type]);
+                            } else {
+                              setSelectedActivityTypes(selectedActivityTypes.filter(t => t !== type));
+                            }
+                          }}
+                          style={{ width: '0.875rem', height: '0.875rem', cursor: 'pointer' }}
+                        />
+                        <span style={{ color: selectedActivityTypes.includes(type) ? 'var(--albion-gold)' : 'var(--albion-text)' }}>
+                          {type}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
             {selectedActivityTypes.length > 0 && (
-              <div style={{ marginTop: '0.75rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div style={{ marginTop: '0.75rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--albion-text-dim)' }}>Selected:</span>
                 {selectedActivityTypes.map(type => (
                   <span
                     key={type}
                     style={{
-                      padding: '0.25rem 0.75rem',
+                      padding: '0.25rem 0.5rem',
                       backgroundColor: 'var(--albion-gold)',
                       color: 'var(--albion-darker)',
-                      borderRadius: '12px',
-                      fontSize: '0.75rem',
+                      borderRadius: '10px',
+                      fontSize: '0.6875rem',
                       fontWeight: 600,
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.5rem'
+                      gap: '0.375rem'
                     }}
                   >
                     {type}
@@ -705,7 +756,7 @@ export function EditActivity(): JSX.Element {
                         color: 'var(--albion-darker)',
                         cursor: 'pointer',
                         padding: 0,
-                        fontSize: '1rem',
+                        fontSize: '0.875rem',
                         lineHeight: 1
                       }}
                     >
@@ -713,6 +764,21 @@ export function EditActivity(): JSX.Element {
                     </button>
                   </span>
                 ))}
+                <button
+                  type="button"
+                  onClick={() => setSelectedActivityTypes([])}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--albion-text-dim)',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    textDecoration: 'underline',
+                    marginLeft: '0.5rem'
+                  }}
+                >
+                  Clear all
+                </button>
               </div>
             )}
           </div>
