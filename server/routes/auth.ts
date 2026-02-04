@@ -53,7 +53,7 @@ async function findOrCreateUser(name: string) {
 }
 
 // Register - name-only authentication
-// Validates name and auto-creates user if needed
+// Validates name against Albion Online guild membership and auto-creates user if needed
 router.post('/register', async (req, res) => {
   try {
     const { name } = req.body;
@@ -64,10 +64,10 @@ router.post('/register', async (req, res) => {
 
     const trimmedName = name.trim();
 
-    // Validate name (can be swapped for external API validation)
+    // Validate name against Albion Online guild membership
     const isValid = await validateName(trimmedName);
     if (!isValid) {
-      return handleValidationError(res, 'Invalid name');
+      return handleValidationError(res, 'Player not found in guild');
     }
 
     // Find or create user
@@ -84,7 +84,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Login - name-only authentication
-// Validates name and auto-creates user if needed
+// Validates name against Albion Online guild membership and auto-creates user if needed
 router.post('/login', async (req, res) => {
   try {
     const { name } = req.body;
@@ -95,10 +95,10 @@ router.post('/login', async (req, res) => {
 
     const trimmedName = name.trim();
 
-    // Validate name (can be swapped for external API validation)
+    // Validate name against Albion Online guild membership
     const isValid = await validateName(trimmedName);
     if (!isValid) {
-      return res.status(401).json({ error: 'Invalid name' });
+      return res.status(401).json({ error: 'Player not found in guild' });
     }
 
     // Find or create user
