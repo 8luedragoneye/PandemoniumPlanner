@@ -17,6 +17,7 @@ export interface Activity {
   creator: string; // User ID (creatorId from backend)
   status: 'recruiting' | 'full' | 'running';
   type?: 'regular' | 'transport';
+  activityTypes?: string[]; // Array of activity type tags for categorization
   zone?: string | null;
   minEquip?: string | null; // T4, T5, T6, T7, T8, T9, T10, T11
   created: string; // createdAt

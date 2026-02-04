@@ -5,6 +5,7 @@ import { ActivityFormData, RoleFormData } from '../types';
 import { formatCETDate, formatDateInput, parseDateInput } from '../lib/utils';
 import { activitiesApi, rolesApi, premadeActivitiesApi } from '../lib/api';
 import type { ApiPremadeActivity } from '../lib/apiTypes';
+import { ACTIVITY_TYPES } from '../lib/constants';
 
 export function CreateActivity(): JSX.Element {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ export function CreateActivity(): JSX.Element {
     minEquip: undefined,
   });
   const [activityType, setActivityType] = useState<'regular' | 'transport'>('regular');
+  const [selectedActivityTypes, setSelectedActivityTypes] = useState<string[]>([]);
   // Initialize with current date/time in German format
   const now = new Date();
   const defaultDate = formatDateInput(now);
@@ -116,6 +118,7 @@ export function CreateActivity(): JSX.Element {
         zone: formData.zone || undefined,
         minEquip: formData.minEquip || undefined,
         type: activityType,
+        activityTypes: selectedActivityTypes,
       });
 
       // Create all roles if any were added
@@ -532,6 +535,7 @@ export function CreateActivity(): JSX.Element {
     });
     setRoles([]);
     setActivityType('regular');
+    setSelectedActivityTypes([]);
     setShowForm(true);
   };
 
@@ -796,8 +800,130 @@ export function CreateActivity(): JSX.Element {
 
   // Form View
   return (
-    <div style={{ maxWidth: '800px', margin: '2rem auto', padding: '2rem' }}>
-      <div className="card">
+    <div style={{ maxWidth: '1200px', margin: '2rem auto', padding: '2rem', display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+      {/* Left Sidebar - Activity Tags */}
+      <div style={{ 
+        width: '280px', 
+        flexShrink: 0,
+        position: 'sticky',
+        top: '2rem'
+      }}>
+        <div className="card" style={{ padding: '1.25rem' }}>
+          <h3 style={{ 
+            marginBottom: '1rem',
+            color: 'var(--albion-gold)',
+            fontSize: '1rem',
+            fontWeight: 600
+          }}>
+            Activity Tags
+          </h3>
+          <p style={{ fontSize: '0.75rem', color: 'var(--albion-text-dim)', marginBottom: '1rem' }}>
+            Select tags to categorize this activity
+          </p>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.375rem',
+            maxHeight: '500px',
+            overflowY: 'auto'
+          }}>
+            {ACTIVITY_TYPES.map((type) => (
+              <label
+                key={type}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 0.75rem',
+                  backgroundColor: selectedActivityTypes.includes(type) ? 'rgba(212, 175, 55, 0.15)' : 'var(--albion-darker)',
+                  border: selectedActivityTypes.includes(type) ? '1px solid var(--albion-gold)' : '1px solid var(--albion-border)',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                  fontSize: '0.8125rem'
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedActivityTypes.includes(type)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedActivityTypes([...selectedActivityTypes, type]);
+                    } else {
+                      setSelectedActivityTypes(selectedActivityTypes.filter(t => t !== type));
+                    }
+                  }}
+                  style={{ width: '0.875rem', height: '0.875rem', cursor: 'pointer' }}
+                />
+                <span style={{ color: selectedActivityTypes.includes(type) ? 'var(--albion-gold)' : 'var(--albion-text)' }}>
+                  {type}
+                </span>
+              </label>
+            ))}
+          </div>
+          {selectedActivityTypes.length > 0 && (
+            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--albion-border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--albion-text-dim)' }}>
+                  Selected ({selectedActivityTypes.length})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedActivityTypes([])}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--albion-text-dim)',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  Clear all
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
+                {selectedActivityTypes.map(type => (
+                  <span
+                    key={type}
+                    style={{
+                      padding: '0.25rem 0.5rem',
+                      backgroundColor: 'var(--albion-gold)',
+                      color: 'var(--albion-darker)',
+                      borderRadius: '10px',
+                      fontSize: '0.6875rem',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.375rem'
+                    }}
+                  >
+                    {type}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedActivityTypes(selectedActivityTypes.filter(t => t !== type))}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--albion-darker)',
+                        cursor: 'pointer',
+                        padding: 0,
+                        fontSize: '0.875rem',
+                        lineHeight: 1
+                      }}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Main Content - Form Card */}
+      <div className="card" style={{ flex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
           <h1 className="card-title" style={{ margin: 0 }}>
             Create New Activity

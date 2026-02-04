@@ -2,7 +2,7 @@ import express from 'express';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';
 import { handleError, handleNotFound, handleUnauthorized, handleValidationError } from '../lib/errorHandler';
-import { ACTIVITY_CLEANUP_HOURS } from '../lib/constants';
+import { ACTIVITY_CLEANUP_HOURS, ACTIVITY_TYPES } from '../lib/constants';
 
 const router = express.Router();
 
@@ -92,10 +92,18 @@ router.get('/:id', authenticateToken, async (req, res) => {
 // Create activity
 router.post('/', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const { name, date, massupTime, description, zone, minEquip, status, type } = req.body;
+    const { name, date, massupTime, description, zone, minEquip, status, type, activityTypes } = req.body;
 
     if (!name || !date || !description) {
       return handleValidationError(res, 'Name, date, and description are required');
+    }
+
+    // Validate activityTypes if provided
+    let validatedActivityTypes: string[] = [];
+    if (activityTypes && Array.isArray(activityTypes)) {
+      validatedActivityTypes = activityTypes.filter((t: string) => 
+        ACTIVITY_TYPES.includes(t as typeof ACTIVITY_TYPES[number])
+      );
     }
 
     const activity = await prisma.activity.create({
@@ -108,6 +116,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
         minEquip: minEquip || null,
         status: status || 'recruiting',
         type: type || 'regular',
+        activityTypes: JSON.stringify(validatedActivityTypes),
         creatorId: req.userId!,
       },
       include: {
@@ -142,7 +151,16 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
       return res.status(403).json({ error: 'Only the creator can update this activity' });
     }
 
-    const { name, date, massupTime, description, zone, minEquip, status, type } = req.body;
+    const { name, date, massupTime, description, zone, minEquip, status, type, activityTypes } = req.body;
+
+    // Validate activityTypes if provided
+    let activityTypesData: { activityTypes: string } | undefined;
+    if (activityTypes !== undefined) {
+      const validatedActivityTypes = Array.isArray(activityTypes) 
+        ? activityTypes.filter((t: string) => ACTIVITY_TYPES.includes(t as typeof ACTIVITY_TYPES[number]))
+        : [];
+      activityTypesData = { activityTypes: JSON.stringify(validatedActivityTypes) };
+    }
 
     const updated = await prisma.activity.update({
       where: { id: req.params.id },
@@ -155,6 +173,7 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
         ...(minEquip !== undefined && { minEquip: minEquip || null }),
         ...(status && { status }),
         ...(type !== undefined && { type }),
+        ...activityTypesData,
       },
       include: {
         creator: {

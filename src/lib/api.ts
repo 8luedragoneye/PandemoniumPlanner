@@ -100,6 +100,7 @@ export const activitiesApi = {
     zone?: string;
     minEquip?: string;
     type?: 'regular' | 'transport';
+    activityTypes?: string[];
   }): Promise<ApiActivity> => {
     return request<ApiActivity>('/activities', {
       method: 'POST',
@@ -116,6 +117,7 @@ export const activitiesApi = {
     minEquip?: string;
     status?: 'recruiting' | 'full' | 'running';
     type?: 'regular' | 'transport';
+    activityTypes?: string[];
   }): Promise<ApiActivity> => {
     return request<ApiActivity>(`/activities/${id}`, {
       method: 'PUT',

@@ -14,6 +14,19 @@ export function transformUser(apiUser: ApiUser): User {
 }
 
 export function transformActivity(apiActivity: ApiActivity): Activity {
+  // Parse activityTypes JSON string to array
+  let activityTypes: string[] = [];
+  if (apiActivity.activityTypes) {
+    try {
+      const parsed = JSON.parse(apiActivity.activityTypes);
+      if (Array.isArray(parsed)) {
+        activityTypes = parsed;
+      }
+    } catch {
+      activityTypes = [];
+    }
+  }
+
   return {
     id: apiActivity.id,
     name: apiActivity.name,
@@ -23,6 +36,7 @@ export function transformActivity(apiActivity: ApiActivity): Activity {
     creator: apiActivity.creatorId,
     status: apiActivity.status,
     type: (apiActivity.type === 'transport' || apiActivity.type === 'regular') ? apiActivity.type : undefined,
+    activityTypes,
     zone: apiActivity.zone ?? undefined,
     minEquip: apiActivity.minEquip ?? undefined,
     created: apiActivity.createdAt,

@@ -6,6 +6,7 @@ import { Activity } from '../types';
 import { isPast, isUpcoming } from '../lib/utils';
 import { ActivityCard } from './ActivityCard';
 import { FilterButtons } from './FilterButtons';
+import { ACTIVITY_TYPES } from '../lib/constants';
 
 type FilterType = 'all' | 'my-activities' | 'signed-up' | 'upcoming' | 'past';
 
@@ -21,12 +22,14 @@ export function ActivityList(): JSX.Element {
   const { activities, roles, signups, loading } = useActivities();
   const { user } = useAuth();
   const [filter, setFilter] = useState<FilterType>('all');
+  const [selectedTypeFilters, setSelectedTypeFilters] = useState<string[]>([]);
 
   const filteredActivities = useMemo(() => {
     if (!user) return [];
 
     let filtered = [...activities];
 
+    // Apply status/ownership filter
     switch (filter) {
       case 'my-activities':
         filtered = filtered.filter(a => a.creator === user.id);
@@ -48,10 +51,31 @@ export function ActivityList(): JSX.Element {
         break;
     }
 
+    // Apply activity type filter (if any types are selected)
+    if (selectedTypeFilters.length > 0) {
+      filtered = filtered.filter(a => {
+        const activityTypes = a.activityTypes || [];
+        // Show if activity has at least one of the selected types
+        return selectedTypeFilters.some(type => activityTypes.includes(type));
+      });
+    }
+
     return filtered.sort((a, b) => 
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
-  }, [activities, signups, user, filter]);
+  }, [activities, signups, user, filter, selectedTypeFilters]);
+
+  const handleTypeFilterToggle = (type: string) => {
+    if (selectedTypeFilters.includes(type)) {
+      setSelectedTypeFilters(selectedTypeFilters.filter(t => t !== type));
+    } else {
+      setSelectedTypeFilters([...selectedTypeFilters, type]);
+    }
+  };
+
+  const clearTypeFilters = () => {
+    setSelectedTypeFilters([]);
+  };
 
   if (loading) {
     return (
@@ -76,53 +100,169 @@ export function ActivityList(): JSX.Element {
   }
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <div className="flex-between" style={{ marginBottom: '2.5rem', alignItems: 'flex-start' }}>
-        <div>
-          <h1 style={{ 
-            fontSize: '2.5rem', 
+    <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto', display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+      {/* Left Sidebar - Activity Type Filters */}
+      <div style={{ 
+        width: '240px', 
+        flexShrink: 0,
+        position: 'sticky',
+        top: '2rem'
+      }}>
+        <div className="card" style={{ padding: '1.25rem' }}>
+          <h3 style={{ 
+            marginBottom: '1rem',
             color: 'var(--albion-gold)',
-            fontWeight: 700,
-            letterSpacing: '-0.025em',
-            marginBottom: '0.5rem',
-            background: 'linear-gradient(135deg, var(--albion-gold) 0%, var(--albion-gold-light) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text'
+            fontSize: '1rem',
+            fontWeight: 600
           }}>
-            Guild Activities
-          </h1>
-          <p className="text-dim" style={{ fontSize: '1rem' }}>
-            Manage and join guild activities
+            Filter by Type
+          </h3>
+          <p style={{ fontSize: '0.75rem', color: 'var(--albion-text-dim)', marginBottom: '1rem' }}>
+            Shows activities matching ANY selected type
           </p>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.375rem',
+            maxHeight: '500px',
+            overflowY: 'auto'
+          }}>
+            {ACTIVITY_TYPES.map((type) => (
+              <label
+                key={type}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 0.75rem',
+                  backgroundColor: selectedTypeFilters.includes(type) ? 'rgba(212, 175, 55, 0.15)' : 'var(--albion-darker)',
+                  border: selectedTypeFilters.includes(type) ? '1px solid var(--albion-gold)' : '1px solid var(--albion-border)',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                  fontSize: '0.8125rem'
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedTypeFilters.includes(type)}
+                  onChange={() => handleTypeFilterToggle(type)}
+                  style={{ width: '0.875rem', height: '0.875rem', cursor: 'pointer' }}
+                />
+                <span style={{ color: selectedTypeFilters.includes(type) ? 'var(--albion-gold)' : 'var(--albion-text)' }}>
+                  {type}
+                </span>
+              </label>
+            ))}
+          </div>
+          {selectedTypeFilters.length > 0 && (
+            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--albion-border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--albion-text-dim)' }}>
+                  Selected ({selectedTypeFilters.length})
+                </span>
+                <button
+                  onClick={clearTypeFilters}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--albion-text-dim)',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  Clear all
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
+                {selectedTypeFilters.map(type => (
+                  <span
+                    key={type}
+                    style={{
+                      padding: '0.25rem 0.5rem',
+                      backgroundColor: 'var(--albion-gold)',
+                      color: 'var(--albion-darker)',
+                      borderRadius: '10px',
+                      fontSize: '0.6875rem',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.375rem'
+                    }}
+                  >
+                    {type}
+                    <button
+                      onClick={() => handleTypeFilterToggle(type)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--albion-darker)',
+                        cursor: 'pointer',
+                        padding: 0,
+                        fontSize: '0.875rem',
+                        lineHeight: 1
+                      }}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-        <Link to="/create" className="btn-primary" style={{ marginTop: '0.5rem' }}>
-          + Create Activity
-        </Link>
       </div>
 
-      <FilterButtons
-        currentFilter={filter}
-        filters={FILTER_OPTIONS}
-        onFilterChange={setFilter}
-      />
+      {/* Main Content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="flex-between" style={{ marginBottom: '2.5rem', alignItems: 'flex-start' }}>
+          <div>
+            <h1 style={{ 
+              fontSize: '2.5rem', 
+              color: 'var(--albion-gold)',
+              fontWeight: 700,
+              letterSpacing: '-0.025em',
+              marginBottom: '0.5rem',
+              background: 'linear-gradient(135deg, var(--albion-gold) 0%, var(--albion-gold-light) 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>
+              Guild Activities
+            </h1>
+            <p className="text-dim" style={{ fontSize: '1rem' }}>
+              Manage and join guild activities
+            </p>
+          </div>
+          <Link to="/create" className="btn-primary" style={{ marginTop: '0.5rem' }}>
+            + Create Activity
+          </Link>
+        </div>
 
-      {filteredActivities.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-          <p className="text-dim" style={{ fontSize: '1.125rem' }}>No activities found.</p>
-        </div>
-      ) : (
-        <div>
-          {filteredActivities.map(activity => (
-            <ActivityCard
-              key={activity.id}
-              activity={activity}
-              roles={roles.filter(r => r.activity === activity.id)}
-              signups={signups.filter(s => s.activity === activity.id)}
-            />
-          ))}
-        </div>
-      )}
+        <FilterButtons
+          currentFilter={filter}
+          filters={FILTER_OPTIONS}
+          onFilterChange={setFilter}
+        />
+
+        {filteredActivities.length === 0 ? (
+          <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+            <p className="text-dim" style={{ fontSize: '1.125rem' }}>No activities found.</p>
+          </div>
+        ) : (
+          <div>
+            {filteredActivities.map(activity => (
+              <ActivityCard
+                key={activity.id}
+                activity={activity}
+                roles={roles.filter(r => r.activity === activity.id)}
+                signups={signups.filter(s => s.activity === activity.id)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

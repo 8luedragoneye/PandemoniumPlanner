@@ -18,6 +18,7 @@ export interface ApiActivity {
   description: string;
   status: 'recruiting' | 'full' | 'running';
   type: string | null; // regular, transport
+  activityTypes: string | null; // JSON array string of activity type tags
   zone: string | null;
   minEquip: string | null; // T4, T5, T6, T7, T8, T9, T10, T11
   creatorId: string;

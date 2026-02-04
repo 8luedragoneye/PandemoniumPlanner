@@ -140,6 +140,42 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
               {formatDisplayDate(activity.date)}
             </span>
           </div>
+          {/* Activity Type Tags */}
+          {activity.activityTypes && activity.activityTypes.length > 0 && (
+            <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+              {activity.activityTypes.slice(0, 4).map(type => (
+                <span
+                  key={type}
+                  style={{
+                    padding: '0.125rem 0.5rem',
+                    backgroundColor: 'var(--albion-darker)',
+                    border: '1px solid var(--albion-border)',
+                    color: 'var(--albion-text-dim)',
+                    borderRadius: '4px',
+                    fontSize: '0.6875rem',
+                    fontWeight: 500
+                  }}
+                >
+                  {type}
+                </span>
+              ))}
+              {activity.activityTypes.length > 4 && (
+                <span
+                  style={{
+                    padding: '0.125rem 0.5rem',
+                    backgroundColor: 'var(--albion-darker)',
+                    border: '1px solid var(--albion-border)',
+                    color: 'var(--albion-text-dim)',
+                    borderRadius: '4px',
+                    fontSize: '0.6875rem',
+                    fontWeight: 500
+                  }}
+                >
+                  +{activity.activityTypes.length - 4}
+                </span>
+              )}
+            </div>
+          )}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span className={`status-badge status-${activity.status}`}>
               {activity.status}

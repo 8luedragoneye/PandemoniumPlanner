@@ -6,6 +6,7 @@ import { formatCETDate, formatDateInput, parseDateInput } from '../lib/utils';
 import { transformActivity, transformRole, transformSignup } from '../lib/transformers';
 import { activitiesApi, rolesApi, signupsApi } from '../lib/api';
 import { RoleManager } from './RoleManager';
+import { ACTIVITY_TYPES } from '../lib/constants';
 
 export function EditActivity(): JSX.Element {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +29,7 @@ export function EditActivity(): JSX.Element {
   const [dateInput, setDateInput] = useState<string>(''); // German format: dd mm yyyy
   const [timeInput, setTimeInput] = useState<string>(''); // HH:mm
   const [massupTimeInput, setMassupTimeInput] = useState<string>(''); // Just time (HH:mm)
+  const [selectedActivityTypes, setSelectedActivityTypes] = useState<string[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -66,6 +68,7 @@ export function EditActivity(): JSX.Element {
         setDateInput(activityDateStr);
         setTimeInput(activityTimeStr);
         setMassupTimeInput(massupTimeStr);
+        setSelectedActivityTypes(activity.activityTypes || []);
         
         // Fetch roles and signups for this activity
         try {
@@ -126,6 +129,7 @@ export function EditActivity(): JSX.Element {
         description: formData.description,
         zone: formData.zone || undefined,
         minEquip: formData.minEquip || undefined,
+        activityTypes: selectedActivityTypes,
       });
       navigate('/');
     } catch (err: unknown) {
@@ -617,6 +621,100 @@ export function EditActivity(): JSX.Element {
               <option value="T10">T10</option>
               <option value="T11">T11</option>
             </select>
+          </div>
+
+          <div style={{ marginBottom: '2rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--albion-text)',
+              fontSize: '0.9375rem'
+            }}>
+              Activity Tags <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional, select multiple)</span>
+            </label>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+              gap: '0.5rem',
+              padding: '1rem',
+              backgroundColor: 'var(--albion-darker)',
+              borderRadius: '8px',
+              border: '1px solid var(--albion-border)',
+              maxHeight: '300px',
+              overflowY: 'auto'
+            }}>
+              {ACTIVITY_TYPES.map((type) => (
+                <label
+                  key={type}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.5rem 0.75rem',
+                    backgroundColor: selectedActivityTypes.includes(type) ? 'rgba(212, 175, 55, 0.15)' : 'var(--albion-dark)',
+                    border: selectedActivityTypes.includes(type) ? '1px solid var(--albion-gold)' : '1px solid var(--albion-border)',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedActivityTypes.includes(type)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedActivityTypes([...selectedActivityTypes, type]);
+                      } else {
+                        setSelectedActivityTypes(selectedActivityTypes.filter(t => t !== type));
+                      }
+                    }}
+                    style={{ width: '1rem', height: '1rem', cursor: 'pointer' }}
+                  />
+                  <span style={{ color: selectedActivityTypes.includes(type) ? 'var(--albion-gold)' : 'var(--albion-text)' }}>
+                    {type}
+                  </span>
+                </label>
+              ))}
+            </div>
+            {selectedActivityTypes.length > 0 && (
+              <div style={{ marginTop: '0.75rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {selectedActivityTypes.map(type => (
+                  <span
+                    key={type}
+                    style={{
+                      padding: '0.25rem 0.75rem',
+                      backgroundColor: 'var(--albion-gold)',
+                      color: 'var(--albion-darker)',
+                      borderRadius: '12px',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}
+                  >
+                    {type}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedActivityTypes(selectedActivityTypes.filter(t => t !== type))}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--albion-darker)',
+                        cursor: 'pointer',
+                        padding: 0,
+                        fontSize: '1rem',
+                        lineHeight: 1
+                      }}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {error && (

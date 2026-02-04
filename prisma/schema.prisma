@@ -28,18 +28,19 @@ model User {
 }
 
 model Activity {
-  id          String   @id @default(cuid())
-  name        String
-  date        DateTime
-  massupTime  DateTime?
-  description String
-  status      String   @default("recruiting") // recruiting, full, running
-  type        String   @default("regular") // regular, transport
-  zone        String?
-  minEquip    String?  // T4, T5, T6, T7, T8, T9, T10, T11
-  creatorId   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  name          String
+  date          DateTime
+  massupTime    DateTime?
+  description   String
+  status        String   @default("recruiting") // recruiting, full, running
+  type          String   @default("regular") // regular, transport
+  activityTypes String   @default("[]") // JSON array of activity type strings
+  zone          String?
+  minEquip      String?  // T4, T5, T6, T7, T8, T9, T10, T11
+  creatorId     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   creator User @relation("ActivityCreator", fields: [creatorId], references: [id], onDelete: Cascade)
   roles   Role[]
