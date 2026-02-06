@@ -184,7 +184,34 @@ export function ActivityDetail(): JSX.Element {
   }
 
   if (!activity) {
-    return <div style={{ padding: '2rem' }}>Activity not found</div>;
+    return (
+      <div style={{ 
+        maxWidth: '600px', 
+        margin: '4rem auto', 
+        padding: '2rem',
+        textAlign: 'center'
+      }}>
+        <div className="card" style={{ padding: '2rem' }}>
+          <h2 style={{ 
+            color: 'var(--albion-gold)', 
+            marginBottom: '1rem',
+            fontSize: '1.5rem'
+          }}>
+            Activity Not Found
+          </h2>
+          <p className="text-dim" style={{ marginBottom: '1.5rem' }}>
+            This activity doesn't exist or may have been deleted.
+          </p>
+          <button 
+            className="btn-primary"
+            onClick={() => navigate('/')}
+            style={{ padding: '0.75rem 1.5rem' }}
+          >
+            ← Back to Activities
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const isOwner = user?.id === activity.creator;
