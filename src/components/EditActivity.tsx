@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { Activity, ActivityFormData, Role, Signup } from '../types';
 import { formatCETDate, formatDateInput, parseDateInput } from '../lib/utils';
@@ -12,6 +13,7 @@ export function EditActivity(): JSX.Element {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [activityRoles, setActivityRoles] = useState<Role[]>([]);
   const [activitySignups, setActivitySignups] = useState<Signup[]>([]);
@@ -113,7 +115,7 @@ export function EditActivity(): JSX.Element {
         
         // Validate that massupTime is not later than activity date
         if (massupDate > activityDate) {
-          setError('Massup time cannot be later than activity date');
+          setError(t('createActivity.massupTimeError'));
           setSaving(false);
           return;
         }
@@ -137,7 +139,7 @@ export function EditActivity(): JSX.Element {
       });
       navigate('/');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to update activity');
+      setError(err instanceof Error ? err.message : t('editActivity.failedToUpdate'));
     } finally {
       setSaving(false);
     }
@@ -302,7 +304,7 @@ export function EditActivity(): JSX.Element {
       await activitiesApi.update(activity.id, { status: newStatus });
       setActivity({ ...activity, status: newStatus });
     } catch (error) {
-      alert('Failed to update status');
+      alert(t('editActivity.failedToUpdateStatus'));
     }
   };
 
@@ -310,7 +312,7 @@ export function EditActivity(): JSX.Element {
     if (!activity) return;
     
     const confirmed = window.confirm(
-      `Are you sure you want to delete "${activity.name}"? This action cannot be undone.`
+      t('editActivity.confirmDelete', { name: activity.name })
     );
     
     if (!confirmed) return;
@@ -322,7 +324,7 @@ export function EditActivity(): JSX.Element {
       await activitiesApi.delete(activity.id);
       navigate('/');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to delete activity');
+      setError(err instanceof Error ? err.message : t('activities.failedToDelete'));
       setSaving(false);
     }
   };
@@ -344,7 +346,7 @@ export function EditActivity(): JSX.Element {
           borderWidth: '3px',
           color: 'var(--albion-gold)'
         }}></div>
-        <p className="text-dim" style={{ fontSize: '1.125rem' }}>Loading activity...</p>
+        <p className="text-dim" style={{ fontSize: '1.125rem' }}>{t('activities.loadingActivity')}</p>
       </div>
     );
   }
@@ -363,22 +365,28 @@ export function EditActivity(): JSX.Element {
             marginBottom: '1rem',
             fontSize: '1.5rem'
           }}>
-            Activity Not Found
+            {t('activities.activityNotFound')}
           </h2>
           <p className="text-dim" style={{ marginBottom: '1.5rem' }}>
-            This activity doesn't exist or may have been deleted.
+            {t('activities.activityNotFoundDesc')}
           </p>
           <button 
             className="btn-primary"
             onClick={() => navigate('/')}
             style={{ padding: '0.75rem 1.5rem' }}
           >
-            ← Back to Activities
+            {t('activities.backToActivities')}
           </button>
         </div>
       </div>
     );
   }
+
+  const categoryTranslations: Record<string, string> = {
+    'PvE Activities': t('activityTypes.pveActivities'),
+    'PvP Activities': t('activityTypes.pvpActivities'),
+    'Mixed (PvE & PvP)': t('activityTypes.mixedActivities'),
+  };
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto', display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
@@ -396,10 +404,10 @@ export function EditActivity(): JSX.Element {
             fontSize: '1rem',
             fontWeight: 600
           }}>
-            Activity Tags
+            {t('createActivity.activityTags')}
           </h3>
           <p style={{ fontSize: '0.75rem', color: 'var(--albion-text-dim)', marginBottom: '1rem' }}>
-            PvE/PvP auto-assigned based on selection
+            {t('createActivity.tagsAutoAssigned')}
           </p>
           
           {/* Auto-assigned meta tags display */}
@@ -412,7 +420,7 @@ export function EditActivity(): JSX.Element {
               border: '1px solid rgba(212, 175, 55, 0.3)'
             }}>
               <span style={{ fontSize: '0.7rem', color: 'var(--albion-text-dim)', display: 'block', marginBottom: '0.375rem' }}>
-                Auto-assigned:
+                {t('createActivity.autoAssigned')}
               </span>
               <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
                 {getAutoAssignedMetaTags(selectedActivityTypes).map(tag => (
@@ -451,7 +459,7 @@ export function EditActivity(): JSX.Element {
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em'
                 }}>
-                  {category}
+                  {categoryTranslations[category] || category}
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                   {types.map((type) => (
@@ -483,7 +491,7 @@ export function EditActivity(): JSX.Element {
                         style={{ width: '0.75rem', height: '0.75rem', cursor: 'pointer' }}
                       />
                       <span style={{ color: selectedActivityTypes.includes(type) ? 'var(--albion-gold)' : 'var(--albion-text)' }}>
-                        {type}
+                        {t(`activityTypes.${type}`) || type}
                       </span>
                     </label>
                   ))}
@@ -496,7 +504,7 @@ export function EditActivity(): JSX.Element {
             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--albion-border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--albion-text-dim)' }}>
-                  Selected ({selectedActivityTypes.length})
+                  {t('activities.selected', { count: selectedActivityTypes.length })}
                 </span>
                 <button
                   type="button"
@@ -510,7 +518,7 @@ export function EditActivity(): JSX.Element {
                     textDecoration: 'underline'
                   }}
                 >
-                  Clear all
+                  {t('activities.clearAll')}
                 </button>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
@@ -529,7 +537,7 @@ export function EditActivity(): JSX.Element {
                       gap: '0.25rem'
                     }}
                   >
-                    {type}
+                    {t(`activityTypes.${type}`) || type}
                     <button
                       type="button"
                       onClick={() => setSelectedActivityTypes(selectedActivityTypes.filter(t => t !== type))}
@@ -557,7 +565,7 @@ export function EditActivity(): JSX.Element {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className="card">
           <h1 className="card-title" style={{ marginBottom: '1.5rem' }}>
-            Edit Activity
+            {t('editActivity.title')}
           </h1>
 
           <div style={{ 
@@ -574,7 +582,7 @@ export function EditActivity(): JSX.Element {
               color: 'var(--albion-text)',
               fontSize: '0.9375rem'
             }}>
-              Activity Status
+              {t('editActivity.activityStatus')}
             </label>
             <div className="flex" style={{ gap: '0.75rem', flexWrap: 'wrap' }}>
               <button
@@ -583,7 +591,7 @@ export function EditActivity(): JSX.Element {
                 onClick={() => handleStatusChange('recruiting')}
                 style={{ padding: '0.625rem 1.25rem', fontSize: '0.875rem' }}
               >
-                Recruiting
+                {t('editActivity.recruiting')}
               </button>
               <button
                 type="button"
@@ -591,7 +599,7 @@ export function EditActivity(): JSX.Element {
                 onClick={() => handleStatusChange('full')}
                 style={{ padding: '0.625rem 1.25rem', fontSize: '0.875rem' }}
               >
-                Full
+                {t('editActivity.full')}
               </button>
               <button
                 type="button"
@@ -599,7 +607,7 @@ export function EditActivity(): JSX.Element {
                 onClick={() => handleStatusChange('running')}
                 style={{ padding: '0.625rem 1.25rem', fontSize: '0.875rem' }}
               >
-                Running
+                {t('editActivity.running')}
               </button>
             </div>
           </div>
@@ -613,7 +621,7 @@ export function EditActivity(): JSX.Element {
               color: 'var(--albion-text)',
               fontSize: '0.9375rem'
             }}>
-              Activity Name <span style={{ color: 'var(--albion-red)' }}>*</span>
+              {t('createActivity.activityName')} <span style={{ color: 'var(--albion-red)' }}>*</span>
             </label>
             <input
               type="text"
@@ -633,7 +641,7 @@ export function EditActivity(): JSX.Element {
               color: 'var(--albion-text)',
               fontSize: '0.9375rem'
             }}>
-              Datum & Zeit (CET) <span style={{ color: 'var(--albion-red)' }}>*</span>
+              {t('createActivity.dateTimeCET')} <span style={{ color: 'var(--albion-red)' }}>*</span>
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
@@ -643,7 +651,7 @@ export function EditActivity(): JSX.Element {
                   fontSize: '0.875rem',
                   color: 'var(--albion-text-dim)'
                 }}>
-                  Datum (dd mm yyyy)
+                  {t('createActivity.dateLabel')}
                 </label>
                 <input
                   type="text"
@@ -652,7 +660,7 @@ export function EditActivity(): JSX.Element {
                   onChange={handleDateChange}
                   required
                   style={{ width: '100%' }}
-                  placeholder="dd mm yyyy oder dd.mm.yyyy"
+                  placeholder={t('createActivity.datePlaceholder')}
                   pattern="\d{1,2}[\s.\/]+\d{1,2}[\s.\/]+\d{4}"
                 />
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
@@ -669,7 +677,7 @@ export function EditActivity(): JSX.Element {
                       cursor: 'pointer'
                     }}
                   >
-                    Heute
+                    {t('createActivity.today')}
                   </button>
                   <button
                     type="button"
@@ -684,7 +692,7 @@ export function EditActivity(): JSX.Element {
                       cursor: 'pointer'
                     }}
                   >
-                    Morgen
+                    {t('createActivity.tomorrow')}
                   </button>
                 </div>
               </div>
@@ -695,7 +703,7 @@ export function EditActivity(): JSX.Element {
                   fontSize: '0.875rem',
                   color: 'var(--albion-text-dim)'
                 }}>
-                  Zeit (HH:mm)
+                  {t('createActivity.timeLabel')}
                 </label>
                 <input
                   type="text"
@@ -740,7 +748,7 @@ export function EditActivity(): JSX.Element {
               color: 'var(--albion-text)',
               fontSize: '0.9375rem'
             }}>
-              Massup Zeit (CET) <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
+              {t('createActivity.massupTimeCET')} <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>({t('common.optional')})</span>
             </label>
             <input
               type="text"
@@ -757,7 +765,7 @@ export function EditActivity(): JSX.Element {
               fontSize: '0.875rem', 
               color: 'var(--albion-text-dim)' 
             }}>
-              Auto-set to activity time when date is set. Uses the same date as the activity.
+              {t('createActivity.massupTimeHelp')}
             </p>
           </div>
 
@@ -769,7 +777,7 @@ export function EditActivity(): JSX.Element {
               color: 'var(--albion-text)',
               fontSize: '0.9375rem'
             }}>
-              Description <span style={{ color: 'var(--albion-red)' }}>*</span>
+              {t('common.description')} <span style={{ color: 'var(--albion-red)' }}>*</span>
             </label>
             <textarea
               name="description"
@@ -788,7 +796,7 @@ export function EditActivity(): JSX.Element {
               color: 'var(--albion-text)',
               fontSize: '0.9375rem'
             }}>
-              Zone <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
+              {t('common.zone')} <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>({t('common.optional')})</span>
             </label>
             <input
               type="text"
@@ -807,7 +815,7 @@ export function EditActivity(): JSX.Element {
               color: 'var(--albion-text)',
               fontSize: '0.9375rem'
             }}>
-              Minimum Equipment <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
+              {t('createActivity.minEquipment')} <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>({t('common.optional')})</span>
             </label>
             <select
               name="minEquip"
@@ -815,7 +823,7 @@ export function EditActivity(): JSX.Element {
               onChange={handleChange}
               style={{ width: '100%' }}
             >
-              <option value="">None</option>
+              <option value="">{t('common.none')}</option>
               <option value="T4">T4</option>
               <option value="T5">T5</option>
               <option value="T6">T6</option>
@@ -847,7 +855,7 @@ export function EditActivity(): JSX.Element {
               className="btn-primary"
               disabled={saving}
             >
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? t('common.saving') : t('editActivity.saveChanges')}
             </button>
             <button
               type="button"
@@ -855,7 +863,7 @@ export function EditActivity(): JSX.Element {
               onClick={() => navigate('/')}
               disabled={saving}
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="button"
@@ -868,7 +876,7 @@ export function EditActivity(): JSX.Element {
                 marginLeft: 'auto'
               }}
             >
-              Delete Activity
+              {t('activities.deleteActivity')}
             </button>
           </div>
         </form>
@@ -893,7 +901,7 @@ export function EditActivity(): JSX.Element {
                 setActivitySignups(signupRecords.map(transformSignup));
               } catch (error) {
                 console.error('Error refetching roles/signups:', error);
-                alert('Failed to refresh roles. Please reload the page.');
+                alert(t('editActivity.failedToRefreshRoles'));
               }
             }}
           />

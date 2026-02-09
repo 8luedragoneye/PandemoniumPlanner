@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Role, Signup } from '../types';
 import { getSignupCount, isRoleFull } from '../lib/utils';
 import { rolesApi } from '../lib/api';
+import { DEBOUNCE_DELAY_MS } from '../lib/constants';
 
 interface RoleManagerProps {
   activityId: string;
@@ -12,6 +14,7 @@ interface RoleManagerProps {
 }
 
 export function RoleManager({ activityId, roles, signups, activityType, onUpdate }: RoleManagerProps): JSX.Element {
+  const { t } = useTranslation();
   const [showForm, setShowForm] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [localRoles, setLocalRoles] = useState<Role[]>(roles);
@@ -107,11 +110,11 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
     // Validate transport role selection
     if (activityType === 'transport' && !editingRole) {
       if (!isFighterRole && !isTransporterRole) {
-        setError('Please select either Fighter or Transporter role');
+        setError(t('roles.selectFighterOrTransporter'));
         return;
       }
       if (!formData.name) {
-        setError('Role name is required');
+        setError(t('roles.roleNameRequired'));
         return;
       }
     }
@@ -148,7 +151,7 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
       setIsTransporterRole(false);
       setWeaponTypeAttr('');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to save role');
+      setError(err instanceof Error ? err.message : t('roles.failedToSave'));
       // Error is already set in setError above
     } finally {
       setLoading(false);
@@ -180,13 +183,13 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
   };
 
   const handleDelete = async (role: Role) => {
-    if (!confirm(`Delete role "${role.name}"? All sign-ups for this role will be deleted.`)) return;
+    if (!confirm(t('roles.confirmDelete', { name: role.name }))) return;
 
     try {
       await rolesApi.delete(role.id);
       if (onUpdate) onUpdate();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Failed to delete role');
+      alert(err instanceof Error ? err.message : t('roles.failedToDelete'));
     }
   };
 
@@ -198,7 +201,7 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
           fontSize: '1.5rem',
           fontWeight: 600
         }}>
-          Manage Roles
+          {t('roles.manageRoles')}
         </h2>
         <button
           type="button"
@@ -250,7 +253,7 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
             }, DEBOUNCE_DELAY_MS);
           }}
         >
-          + Add Role
+          {t('roles.addRole')}
         </button>
       </div>
 
@@ -262,7 +265,7 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
           marginBottom: '1rem'
         }}>
           <h3 style={{ marginBottom: '1rem' }}>
-            {editingRole ? 'Edit Role' : 'New Role'}
+            {editingRole ? t('roles.editRole') : t('roles.newRole')}
           </h3>
           <form onSubmit={handleSubmit} data-role-form>
             {activityType === 'transport' && !editingRole ? (
@@ -275,7 +278,7 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
                     color: 'var(--albion-text)',
                     fontSize: '0.9375rem'
                   }}>
-                    Role Type <span style={{ color: 'var(--albion-red)' }}>*</span>
+                    {t('roles.roleType')} <span style={{ color: 'var(--albion-red)' }}>*</span>
                   </label>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     <label style={{ 
@@ -296,9 +299,9 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
                         style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
                       />
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600, fontSize: '0.9375rem' }}>Transporter</div>
+                        <div style={{ fontWeight: 600, fontSize: '0.9375rem' }}>{t('roles.transporter')}</div>
                         <div style={{ fontSize: '0.8125rem', color: 'var(--albion-text-dim)', marginTop: '0.25rem' }}>
-                          No additional attributes needed
+                          {t('roles.transporterDesc')}
                         </div>
                       </div>
                     </label>
@@ -321,9 +324,9 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
                         style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
                       />
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600, fontSize: '0.9375rem' }}>Fighter</div>
+                        <div style={{ fontWeight: 600, fontSize: '0.9375rem' }}>{t('roles.fighter')}</div>
                         <div style={{ fontSize: '0.8125rem', color: 'var(--albion-text-dim)', marginTop: '0.25rem' }}>
-                          Requires weapon type attribute
+                          {t('roles.fighterDesc')}
                         </div>
                       </div>
                     </label>
@@ -340,7 +343,7 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
                         color: 'var(--albion-text)',
                         fontSize: '0.9375rem'
                       }}>
-                        Role <span style={{ color: 'var(--albion-red)' }}>*</span>
+                        {t('roles.role')} <span style={{ color: 'var(--albion-red)' }}>*</span>
                       </label>
                       <input
                         type="text"
@@ -364,7 +367,7 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
                         color: 'var(--albion-text)',
                         fontSize: '0.9375rem'
                       }}>
-                        Slots <span style={{ color: 'var(--albion-red)' }}>*</span>
+                        {t('common.slots')} <span style={{ color: 'var(--albion-red)' }}>*</span>
                       </label>
                       <input
                         type="number"
@@ -393,7 +396,7 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
                   color: 'var(--albion-text)',
                   fontSize: '0.9375rem'
                 }}>
-                  Role Name <span style={{ color: 'var(--albion-red)' }}>*</span>
+                  {t('roles.roleName')} <span style={{ color: 'var(--albion-red)' }}>*</span>
                 </label>
                 <input
                   type="text"
@@ -401,7 +404,7 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   required
                   style={{ width: '100%' }}
-                  placeholder="e.g., Tank, Healer, DPS"
+                  placeholder={t('roles.roleNamePlaceholder')}
                 />
               </div>
             )}
@@ -415,7 +418,7 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
                   color: 'var(--albion-text)',
                   fontSize: '0.9375rem'
                 }}>
-                  Slots <span style={{ color: 'var(--albion-red)' }}>*</span>
+                  {t('common.slots')} <span style={{ color: 'var(--albion-red)' }}>*</span>
                 </label>
                 <input
                   type="number"
@@ -437,21 +440,21 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
                   color: 'var(--albion-text)',
                   fontSize: '0.9375rem'
                 }}>
-                  Attributes (Requirements)
+                  {t('roles.attributes')}
                 </label>
               <div className="flex" style={{ gap: '0.5rem', marginBottom: '0.5rem' }}>
                 <input
                   type="text"
                   value={newAttributeKey}
                   onChange={(e) => setNewAttributeKey(e.target.value)}
-                  placeholder="Key (e.g., min_IP)"
+                  placeholder={t('roles.keyPlaceholder')}
                   style={{ flex: 1 }}
                 />
                 <input
                   type="text"
                   value={newAttributeValue}
                   onChange={(e) => setNewAttributeValue(e.target.value)}
-                  placeholder="Value (e.g., 1300)"
+                  placeholder={t('roles.valuePlaceholder')}
                   style={{ flex: 1 }}
                 />
                 <button
@@ -459,7 +462,7 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
                   className="btn-secondary"
                   onClick={handleAddAttribute}
                 >
-                  Add
+                  {t('common.add')}
                 </button>
               </div>
               {Object.keys(formData.attributes).length > 0 && (
@@ -513,7 +516,7 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
 
             <div className="flex" style={{ gap: '1rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--albion-border)' }}>
               <button type="submit" className="btn-primary" disabled={loading}>
-                {loading ? 'Saving...' : (editingRole ? 'Update' : 'Create')}
+                {loading ? t('common.saving') : (editingRole ? t('common.update') : t('common.create'))}
               </button>
               <button
                 type="button"
@@ -530,7 +533,7 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
                   setNewAttributeValue('');
                 }}
               >
-                Cancel
+                {t('common.cancel')}
               </button>
             </div>
           </form>
@@ -538,7 +541,7 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
       )}
 
       {localRoles.length === 0 ? (
-        <p className="text-dim">No roles defined. Add roles to allow sign-ups.</p>
+        <p className="text-dim">{t('roles.noRoles')}</p>
       ) : (
         <div>
           {localRoles.map(role => {
@@ -574,14 +577,14 @@ export function RoleManager({ activityId, roles, signups, activityType, onUpdate
                       className="btn-secondary"
                       onClick={() => handleEdit(role)}
                     >
-                      Edit
+                      {t('common.edit')}
                     </button>
                     <button
                       type="button"
                       className="btn-danger"
                       onClick={() => handleDelete(role)}
                     >
-                      Delete
+                      {t('common.delete')}
                     </button>
                   </div>
                 </div>

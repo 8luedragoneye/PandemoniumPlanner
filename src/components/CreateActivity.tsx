@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { ActivityFormData, RoleFormData } from '../types';
 import { formatCETDate, formatDateInput, parseDateInput } from '../lib/utils';
@@ -10,6 +11,14 @@ import { ACTIVITY_TYPE_CATEGORIES, getAutoAssignedMetaTags } from '../lib/consta
 export function CreateActivity(): JSX.Element {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  
+  const categoryTranslations: Record<string, string> = {
+    'PvE Activities': t('activityTypes.pveActivities'),
+    'PvP Activities': t('activityTypes.pvpActivities'),
+    'Mixed (PvE & PvP)': t('activityTypes.mixedActivities'),
+  };
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [savingTemplate, setSavingTemplate] = useState(false);
@@ -101,7 +110,7 @@ export function CreateActivity(): JSX.Element {
         
         // Validate that massupTime is not later than activity date
         if (massupDate > activityDate) {
-          setError('Massup time cannot be later than activity date');
+          setError(t('createActivity.massupTimeError'));
           setLoading(false);
           return;
         }
@@ -140,7 +149,7 @@ export function CreateActivity(): JSX.Element {
           );
         } catch (roleErr: unknown) {
           // If role creation fails, still navigate but show error
-          setError(roleErr instanceof Error ? roleErr.message : 'Activity created but failed to create some roles');
+          setError(roleErr instanceof Error ? roleErr.message : t('createActivity.failedToCreateRoles'));
           setLoading(false);
           return;
         }
@@ -148,7 +157,7 @@ export function CreateActivity(): JSX.Element {
 
       navigate('/');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to create activity');
+      setError(err instanceof Error ? err.message : t('createActivity.failedToCreate'));
     } finally {
       setLoading(false);
     }
@@ -411,17 +420,17 @@ export function CreateActivity(): JSX.Element {
     // Validate transport role selection
     if (activityType === 'transport' && editingRoleIndex === null) {
       if (!isFighterRole && !isTransporterRole) {
-        setRoleError('Please select either Fighter or Transporter role');
+        setRoleError(t('roles.selectFighterOrTransporter'));
         return;
       }
       if (!roleFormData.name) {
-        setRoleError('Role name is required');
+        setRoleError(t('roles.roleNameRequired'));
         return;
       }
     }
     
     if (!roleFormData.name.trim()) {
-      setRoleError('Role name is required');
+      setRoleError(t('roles.roleNameRequired'));
       return;
     }
 
@@ -555,7 +564,7 @@ export function CreateActivity(): JSX.Element {
   // Save current form as template
   const handleSaveAsTemplate = async () => {
     if (!formData.name || !formData.description) {
-      setError('Name and description are required to save as template');
+      setError(t('createActivity.templateRequiresFields'));
       return;
     }
 
@@ -579,7 +588,7 @@ export function CreateActivity(): JSX.Element {
 
       await premadeActivitiesApi.create(templateData);
       
-      setTemplateSuccess('Template saved successfully!');
+      setTemplateSuccess(t('createActivity.templateSaved'));
       
       // Refresh premade activities list
       const premades = await premadeActivitiesApi.getAll();
@@ -590,7 +599,7 @@ export function CreateActivity(): JSX.Element {
         setTemplateSuccess('');
       }, 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save template');
+      setError(err instanceof Error ? err.message : t('createActivity.failedToSaveTemplate'));
     } finally {
       setSavingTemplate(false);
     }
@@ -602,7 +611,7 @@ export function CreateActivity(): JSX.Element {
       <div style={{ maxWidth: '900px', margin: '2rem auto', padding: '2rem' }}>
         <div className="card">
           <h1 className="card-title" style={{ marginBottom: '2rem' }}>
-            Create New Activity
+            {t('createActivity.title')}
           </h1>
 
           <div style={{ marginBottom: '2rem' }}>
@@ -611,7 +620,7 @@ export function CreateActivity(): JSX.Element {
               fontSize: '0.9375rem',
               marginBottom: '1.5rem'
             }}>
-              Choose a template to get started, or create a new activity from scratch.
+              {t('createActivity.chooseTemplate')}
             </p>
 
             {/* Start from scratch option */}
@@ -660,14 +669,14 @@ export function CreateActivity(): JSX.Element {
                   fontSize: '1.125rem',
                   fontWeight: 600
                 }}>
-                  Start from Scratch
+                  {t('createActivity.startFromScratch')}
                 </h3>
                 <p style={{ 
                   margin: 0,
                   color: 'var(--albion-text-dim)', 
                   fontSize: '0.875rem'
                 }}>
-                  Create a new activity without using a template
+                  {t('createActivity.startFromScratchDesc')}
                 </p>
               </div>
             </div>
@@ -681,7 +690,7 @@ export function CreateActivity(): JSX.Element {
                   fontWeight: 600,
                   marginBottom: '1rem'
                 }}>
-                  Available Templates
+                  {t('createActivity.availableTemplates')}
                 </h2>
                 <div style={{ 
                   display: 'grid', 
@@ -793,7 +802,7 @@ export function CreateActivity(): JSX.Element {
 
             {isLoadingPremades && (
               <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--albion-text-dim)' }}>
-                Loading templates...
+                {t('createActivity.loadingTemplates')}
               </div>
             )}
           </div>
@@ -819,10 +828,10 @@ export function CreateActivity(): JSX.Element {
             fontSize: '1rem',
             fontWeight: 600
           }}>
-            Activity Tags
+            {t('createActivity.activityTags')}
           </h3>
           <p style={{ fontSize: '0.75rem', color: 'var(--albion-text-dim)', marginBottom: '1rem' }}>
-            PvE/PvP auto-assigned based on selection
+            {t('createActivity.tagsAutoAssigned')}
           </p>
           
           {/* Auto-assigned meta tags display */}
@@ -835,7 +844,7 @@ export function CreateActivity(): JSX.Element {
               border: '1px solid rgba(212, 175, 55, 0.3)'
             }}>
               <span style={{ fontSize: '0.6875rem', color: 'var(--albion-text-dim)', display: 'block', marginBottom: '0.375rem' }}>
-                Auto-assigned:
+                {t('createActivity.autoAssigned')}
               </span>
               <div style={{ display: 'flex', gap: '0.375rem' }}>
                 {getAutoAssignedMetaTags(selectedActivityTypes).map(tag => (
@@ -874,7 +883,7 @@ export function CreateActivity(): JSX.Element {
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em'
                 }}>
-                  {category}
+                  {categoryTranslations[category] || category}
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                   {types.map((type) => (
@@ -906,7 +915,7 @@ export function CreateActivity(): JSX.Element {
                         style={{ width: '0.8rem', height: '0.8rem', cursor: 'pointer' }}
                       />
                       <span style={{ color: selectedActivityTypes.includes(type) ? 'var(--albion-gold)' : 'var(--albion-text)' }}>
-                        {type}
+                        {t(`activityTypes.${type}`) || type}
                       </span>
                     </label>
                   ))}
@@ -919,7 +928,7 @@ export function CreateActivity(): JSX.Element {
             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--albion-border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--albion-text-dim)' }}>
-                  Selected ({selectedActivityTypes.length})
+                  {t('activities.selected', { count: selectedActivityTypes.length })}
                 </span>
                 <button
                   type="button"
@@ -933,7 +942,7 @@ export function CreateActivity(): JSX.Element {
                     textDecoration: 'underline'
                   }}
                 >
-                  Clear all
+                  {t('activities.clearAll')}
                 </button>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
@@ -952,7 +961,7 @@ export function CreateActivity(): JSX.Element {
                       gap: '0.25rem'
                     }}
                   >
-                    {type}
+                    {t(`activityTypes.${type}`) || type}
                     <button
                       type="button"
                       onClick={() => setSelectedActivityTypes(selectedActivityTypes.filter(t => t !== type))}
@@ -980,7 +989,7 @@ export function CreateActivity(): JSX.Element {
       <div className="card" style={{ flex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
           <h1 className="card-title" style={{ margin: 0 }}>
-            Create New Activity
+            {t('createActivity.title')}
           </h1>
           <button
             type="button"
@@ -988,7 +997,7 @@ export function CreateActivity(): JSX.Element {
             className="btn-secondary"
             style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
           >
-            ← Back
+            {t('createActivity.backButton')}
           </button>
         </div>
 
@@ -1010,7 +1019,7 @@ export function CreateActivity(): JSX.Element {
               color: 'var(--albion-text)',
               fontWeight: 500
             }}>
-              Using template: <strong>{premadeActivities.find(p => p.id === selectedPremadeId)?.name}</strong>
+              {t('createActivity.usingTemplate').split('<1>')[0]}<strong>{premadeActivities.find(p => p.id === selectedPremadeId)?.name}</strong>
             </p>
           </div>
         )}
@@ -1159,15 +1168,15 @@ export function CreateActivity(): JSX.Element {
               color: 'var(--albion-text)',
               fontSize: '0.9375rem'
             }}>
-              Activity Type <span style={{ color: 'var(--albion-red)' }}>*</span>
+              {t('createActivity.activityType')} <span style={{ color: 'var(--albion-red)' }}>*</span>
             </label>
             <select
               value={activityType}
               onChange={(e) => setActivityType(e.target.value as 'regular' | 'transport')}
               style={{ width: '100%', marginBottom: '1.5rem' }}
             >
-              <option value="regular">Regular Activity</option>
-              <option value="transport">Transport Activity</option>
+              <option value="regular">{t('createActivity.regularActivity')}</option>
+              <option value="transport">{t('createActivity.transportActivity')}</option>
             </select>
             {activityType === 'transport' && (
               <div style={{
@@ -1178,7 +1187,7 @@ export function CreateActivity(): JSX.Element {
                 borderRadius: '4px',
                 fontSize: '0.875rem'
               }}>
-                <strong className="text-gold">Transport Activity:</strong> This activity will use the transport pairing system. Participants will need to provide source, target, and other transport-specific information when signing up.
+                <strong className="text-gold">{t('createActivity.transportInfo').split(':')[0]}:</strong> {t('createActivity.transportInfo').split(':').slice(1).join(':').trim()}
               </div>
             )}
           </div>
@@ -1191,7 +1200,7 @@ export function CreateActivity(): JSX.Element {
               color: 'var(--albion-text)',
               fontSize: '0.9375rem'
             }}>
-              Activity Name <span style={{ color: 'var(--albion-red)' }}>*</span>
+              {t('createActivity.activityName')} <span style={{ color: 'var(--albion-red)' }}>*</span>
             </label>
             <input
               type="text"
@@ -1200,7 +1209,7 @@ export function CreateActivity(): JSX.Element {
               onChange={handleChange}
               required
               style={{ width: '100%' }}
-              placeholder="e.g., Black Zone Raid"
+              placeholder={t('createActivity.activityNamePlaceholder')}
             />
           </div>
 
@@ -1212,7 +1221,7 @@ export function CreateActivity(): JSX.Element {
               color: 'var(--albion-text)',
               fontSize: '0.9375rem'
             }}>
-              Datum & Zeit (CET) <span style={{ color: 'var(--albion-red)' }}>*</span>
+              {t('createActivity.dateTimeCET')} <span style={{ color: 'var(--albion-red)' }}>*</span>
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div>
@@ -1222,7 +1231,7 @@ export function CreateActivity(): JSX.Element {
                   fontSize: '0.875rem',
                   color: 'var(--albion-text-dim)'
                 }}>
-                  Datum (dd mm yyyy)
+                  {t('createActivity.dateLabel')}
                 </label>
                 <input
                   type="text"
@@ -1231,7 +1240,7 @@ export function CreateActivity(): JSX.Element {
                   onChange={handleDateChange}
                   required
                   style={{ width: '100%' }}
-                  placeholder="dd mm yyyy oder dd.mm.yyyy"
+                  placeholder={t('createActivity.datePlaceholder')}
                   pattern="\d{1,2}[\s.\/]+\d{1,2}[\s.\/]+\d{4}"
                 />
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
@@ -1248,7 +1257,7 @@ export function CreateActivity(): JSX.Element {
                       cursor: 'pointer'
                     }}
                   >
-                    Heute
+                    {t('createActivity.today')}
                   </button>
                   <button
                     type="button"
@@ -1263,7 +1272,7 @@ export function CreateActivity(): JSX.Element {
                       cursor: 'pointer'
                     }}
                   >
-                    Morgen
+                    {t('createActivity.tomorrow')}
                   </button>
                 </div>
               </div>
@@ -1274,7 +1283,7 @@ export function CreateActivity(): JSX.Element {
                   fontSize: '0.875rem',
                   color: 'var(--albion-text-dim)'
                 }}>
-                  Zeit (HH:mm)
+                  {t('createActivity.timeLabel')}
                 </label>
                 <input
                   type="text"
@@ -1319,7 +1328,7 @@ export function CreateActivity(): JSX.Element {
               color: 'var(--albion-text)',
               fontSize: '0.9375rem'
             }}>
-              Massup Zeit (CET) <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
+              {t('createActivity.massupTimeCET')} <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>({t('common.optional')})</span>
             </label>
             <input
               type="text"
@@ -1336,7 +1345,7 @@ export function CreateActivity(): JSX.Element {
               fontSize: '0.875rem', 
               color: 'var(--albion-text-dim)' 
             }}>
-              Auto-set to activity time when date is set. Uses the same date as the activity.
+              {t('createActivity.massupTimeHelp')}
             </p>
           </div>
 
@@ -1348,7 +1357,7 @@ export function CreateActivity(): JSX.Element {
               color: 'var(--albion-text)',
               fontSize: '0.9375rem'
             }}>
-              Description <span style={{ color: 'var(--albion-red)' }}>*</span>
+              {t('common.description')} <span style={{ color: 'var(--albion-red)' }}>*</span>
             </label>
             <textarea
               name="description"
@@ -1356,7 +1365,7 @@ export function CreateActivity(): JSX.Element {
               onChange={handleChange}
               required
               style={{ width: '100%', minHeight: '120px' }}
-              placeholder="Describe the activity..."
+              placeholder={t('createActivity.descriptionPlaceholder')}
             />
           </div>
 
@@ -1368,7 +1377,7 @@ export function CreateActivity(): JSX.Element {
               color: 'var(--albion-text)',
               fontSize: '0.9375rem'
             }}>
-              Zone <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
+              {t('common.zone')} <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>({t('common.optional')})</span>
             </label>
             <input
               type="text"
@@ -1376,7 +1385,7 @@ export function CreateActivity(): JSX.Element {
               value={formData.zone || ''}
               onChange={handleChange}
               style={{ width: '100%' }}
-              placeholder="e.g., Thetford, Martlock"
+              placeholder={t('createActivity.zonePlaceholder')}
             />
           </div>
 
@@ -1388,7 +1397,7 @@ export function CreateActivity(): JSX.Element {
               color: 'var(--albion-text)',
               fontSize: '0.9375rem'
             }}>
-              Minimum Equipment <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
+              {t('createActivity.minEquipment')} <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>({t('common.optional')})</span>
             </label>
             <select
               name="minEquip"
@@ -1396,7 +1405,7 @@ export function CreateActivity(): JSX.Element {
               onChange={handleChange}
               style={{ width: '100%' }}
             >
-              <option value="">None</option>
+              <option value="">{t('common.none')}</option>
               <option value="T4">T4</option>
               <option value="T5">T5</option>
               <option value="T6">T6</option>
@@ -1421,7 +1430,7 @@ export function CreateActivity(): JSX.Element {
                 fontSize: '1.25rem',
                 fontWeight: 600
               }}>
-                Roles <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem', fontWeight: 400 }}>(optional)</span>
+                {t('createActivity.roles')} <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem', fontWeight: 400 }}>({t('common.optional')})</span>
               </h2>
               <button
                 type="button"
@@ -1429,7 +1438,7 @@ export function CreateActivity(): JSX.Element {
                 onClick={handleAddRole}
                 style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
               >
-                + Add Role
+                {t('createActivity.addRole')}
               </button>
             </div>
 
@@ -1441,7 +1450,7 @@ export function CreateActivity(): JSX.Element {
                 marginBottom: '1rem'
               }}>
                 <h3 style={{ marginBottom: '1rem', fontSize: '1rem' }}>
-                  {editingRoleIndex !== null ? 'Edit Role' : 'New Role'}
+                  {editingRoleIndex !== null ? t('roles.editRole') : t('roles.newRole')}
                 </h3>
                 {activityType === 'transport' && editingRoleIndex === null ? (
                   <>
@@ -1453,7 +1462,7 @@ export function CreateActivity(): JSX.Element {
                         color: 'var(--albion-text)',
                         fontSize: '0.9375rem'
                       }}>
-                        Role Type <span style={{ color: 'var(--albion-red)' }}>*</span>
+                        {t('roles.roleType')} <span style={{ color: 'var(--albion-red)' }}>*</span>
                       </label>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                         <label style={{ 
@@ -1474,9 +1483,9 @@ export function CreateActivity(): JSX.Element {
                             style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
                           />
                           <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 600, fontSize: '0.9375rem' }}>Transporter</div>
+                            <div style={{ fontWeight: 600, fontSize: '0.9375rem' }}>{t('roles.transporter')}</div>
                             <div style={{ fontSize: '0.8125rem', color: 'var(--albion-text-dim)', marginTop: '0.25rem' }}>
-                              No additional attributes needed
+                              {t('roles.transporterDesc')}
                             </div>
                           </div>
                         </label>
@@ -1499,9 +1508,9 @@ export function CreateActivity(): JSX.Element {
                             style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
                           />
                           <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 600, fontSize: '0.9375rem' }}>Fighter</div>
+                            <div style={{ fontWeight: 600, fontSize: '0.9375rem' }}>{t('roles.fighter')}</div>
                             <div style={{ fontSize: '0.8125rem', color: 'var(--albion-text-dim)', marginTop: '0.25rem' }}>
-                              Requires weapon type attribute
+                              {t('roles.fighterDesc')}
                             </div>
                           </div>
                         </label>
@@ -1518,7 +1527,7 @@ export function CreateActivity(): JSX.Element {
                             color: 'var(--albion-text)',
                             fontSize: '0.9375rem'
                           }}>
-                            Weapon Type <span style={{ color: 'var(--albion-red)' }}>*</span>
+                            {t('roles.weaponType')} <span style={{ color: 'var(--albion-red)' }}>*</span>
                           </label>
                           <input
                             type="text"
@@ -1542,7 +1551,7 @@ export function CreateActivity(): JSX.Element {
                             color: 'var(--albion-text)',
                             fontSize: '0.9375rem'
                           }}>
-                            Slots <span style={{ color: 'var(--albion-red)' }}>*</span>
+                            {t('common.slots')} <span style={{ color: 'var(--albion-red)' }}>*</span>
                           </label>
                           <input
                             type="number"
@@ -1566,7 +1575,7 @@ export function CreateActivity(): JSX.Element {
                         color: 'var(--albion-text)',
                         fontSize: '0.9375rem'
                       }}>
-                        Role Name <span style={{ color: 'var(--albion-red)' }}>*</span>
+                        {t('roles.roleName')} <span style={{ color: 'var(--albion-red)' }}>*</span>
                       </label>
                       <input
                         type="text"
@@ -1574,7 +1583,7 @@ export function CreateActivity(): JSX.Element {
                         onChange={(e) => setRoleFormData(prev => ({ ...prev, name: e.target.value }))}
                         required
                         style={{ width: '100%' }}
-                        placeholder="e.g., Tank, Healer, DPS"
+                        placeholder={t('roles.roleNamePlaceholder')}
                       />
                     </div>
 
@@ -1586,7 +1595,7 @@ export function CreateActivity(): JSX.Element {
                         color: 'var(--albion-text)',
                         fontSize: '0.9375rem'
                       }}>
-                        Slots <span style={{ color: 'var(--albion-red)' }}>*</span>
+                        {t('common.slots')} <span style={{ color: 'var(--albion-red)' }}>*</span>
                       </label>
                       <input
                         type="number"
@@ -1606,21 +1615,21 @@ export function CreateActivity(): JSX.Element {
                         color: 'var(--albion-text)',
                         fontSize: '0.9375rem'
                       }}>
-                        Attributes (Requirements)
+                        {t('roles.attributes')}
                       </label>
                       <div className="flex" style={{ gap: '0.5rem', marginBottom: '0.5rem' }}>
                         <input
                           type="text"
                           value={newAttributeKey}
                           onChange={(e) => setNewAttributeKey(e.target.value)}
-                          placeholder="Key (e.g., min_IP)"
+                          placeholder={t('roles.keyPlaceholder')}
                           style={{ flex: 1 }}
                         />
                         <input
                           type="text"
                           value={newAttributeValue}
                           onChange={(e) => setNewAttributeValue(e.target.value)}
-                          placeholder="Value (e.g., 1300)"
+                          placeholder={t('roles.valuePlaceholder')}
                           style={{ flex: 1 }}
                         />
                         <button
@@ -1628,7 +1637,7 @@ export function CreateActivity(): JSX.Element {
                           className="btn-secondary"
                           onClick={handleAddAttribute}
                         >
-                          Add
+                          {t('common.add')}
                         </button>
                       </div>
                       {Object.keys(roleFormData.attributes).length > 0 && (
@@ -1687,14 +1696,14 @@ export function CreateActivity(): JSX.Element {
                     className="btn-primary" 
                     onClick={handleSaveRole}
                   >
-                    {editingRoleIndex !== null ? 'Update Role' : 'Add Role'}
+                    {editingRoleIndex !== null ? t('roles.updateRole') : t('roles.addRoleBtn')}
                   </button>
                   <button
                     type="button"
                     className="btn-secondary"
                     onClick={handleCancelRole}
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                 </div>
               </div>
@@ -1702,7 +1711,7 @@ export function CreateActivity(): JSX.Element {
 
             {roles.length === 0 && !showRoleForm ? (
               <p className="text-dim" style={{ fontSize: '0.875rem' }}>
-                No roles added yet. You can add roles now or later in the edit view.
+                {t('createActivity.noRolesYet')}
               </p>
             ) : (
               roles.length > 0 && (
@@ -1738,7 +1747,7 @@ export function CreateActivity(): JSX.Element {
                             onClick={() => handleEditRole(index)}
                             style={{ fontSize: '0.875rem', padding: '0.375rem 0.75rem' }}
                           >
-                            Edit
+                            {t('common.edit')}
                           </button>
                           <button
                             type="button"
@@ -1746,7 +1755,7 @@ export function CreateActivity(): JSX.Element {
                             onClick={() => handleDeleteRole(index)}
                             style={{ fontSize: '0.875rem', padding: '0.375rem 0.75rem' }}
                           >
-                            Delete
+                            {t('common.delete')}
                           </button>
                         </div>
                       </div>
@@ -1791,7 +1800,7 @@ export function CreateActivity(): JSX.Element {
               className="btn-primary"
               disabled={loading || savingTemplate}
             >
-              {loading ? 'Creating...' : 'Create Activity'}
+              {loading ? t('common.creating') : t('createActivity.createActivityBtn')}
             </button>
             <button
               type="button"
@@ -1803,7 +1812,7 @@ export function CreateActivity(): JSX.Element {
                 cursor: (!formData.name || !formData.description) ? 'not-allowed' : 'pointer'
               }}
             >
-              {savingTemplate ? 'Saving...' : 'Save as Template'}
+              {savingTemplate ? t('common.saving') : t('createActivity.saveAsTemplate')}
             </button>
             <button
               type="button"
@@ -1811,7 +1820,7 @@ export function CreateActivity(): JSX.Element {
               onClick={() => navigate('/')}
               disabled={loading || savingTemplate}
             >
-              Cancel
+              {t('common.cancel')}
             </button>
           </div>
         </form>

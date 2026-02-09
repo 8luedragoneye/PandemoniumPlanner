@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FillProvider } from '../types';
 import { fillProvidersApi } from '../lib/api';
 import { transformFillProvider } from '../lib/transformers';
@@ -9,6 +10,7 @@ interface FillProviderManagerProps {
 }
 
 export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX.Element {
+  const { t } = useTranslation();
   const [providers, setProviders] = useState<FillProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,7 +33,7 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX
       setProviders(apiProviders.map(transformFillProvider));
       setError('');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load fill providers');
+      setError(err instanceof Error ? err.message : t('fill.failedToLoadProviders'));
     } finally {
       setLoading(false);
     }
@@ -51,7 +53,7 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX
       await loadProviders();
       if (onUpdate) onUpdate();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to add points');
+      setError(err instanceof Error ? err.message : t('fill.failedToAddPoints'));
     }
   };
 
@@ -64,18 +66,18 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX
       await loadProviders();
       if (onUpdate) onUpdate();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to update provider');
+      setError(err instanceof Error ? err.message : t('fill.failedToUpdateProvider'));
     }
   };
 
   if (loading) {
-    return <div className="text-dim">Loading fill providers...</div>;
+    return <div className="text-dim">{t('fill.loadingProviders')}</div>;
   }
 
   return (
     <div style={{ marginTop: '2rem' }}>
       <h3 style={{ marginBottom: '1rem', color: 'var(--albion-gold)' }}>
-        Fill Providers
+        {t('fill.fillProviders')}
       </h3>
 
       <div style={{
@@ -87,14 +89,14 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX
         fontSize: '0.875rem'
       }}>
         <p style={{ marginBottom: '0.5rem', fontWeight: 600, color: 'var(--albion-gold)' }}>
-          Minimum Requirements:
+          {t('fill.minRequirements')}
         </p>
         <ul style={{ margin: 0, paddingLeft: '1.5rem', color: 'var(--albion-text-dim)' }}>
-          <li>Slot Fill: Minimum {MIN_FILL_SLOTS} slots per session</li>
-          <li>Weight Fill: Minimum 20t per session</li>
+          <li>{t('fill.slotFillMin', { count: MIN_FILL_SLOTS })}</li>
+          <li>{t('fill.weightFillMin')}</li>
         </ul>
         <p style={{ marginTop: '0.5rem', fontSize: '0.8125rem', color: 'var(--albion-text-dim)' }}>
-          Priority is calculated from points: +1 for participation, -1 for assignment, -1 for problems. Higher priority = assigned first.
+          {t('fill.priorityCalcExplanation')}
         </p>
       </div>
 
@@ -108,27 +110,27 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX
           border: '1px solid var(--albion-border)'
         }}>
           <h4 style={{ marginBottom: '0.75rem', color: 'var(--albion-gold)', fontSize: '1rem' }}>
-            Priority Overview
+            {t('fill.priorityOverview')}
           </h4>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', fontSize: '0.875rem' }}>
             <div>
-              <strong style={{ color: 'var(--albion-text-dim)' }}>Total Providers:</strong>{' '}
+              <strong style={{ color: 'var(--albion-text-dim)' }}>{t('fill.totalProviders')}</strong>{' '}
               <span style={{ fontWeight: 600 }}>{providers.length}</span>
             </div>
             <div>
-              <strong style={{ color: 'var(--albion-text-dim)' }}>Active Providers:</strong>{' '}
+              <strong style={{ color: 'var(--albion-text-dim)' }}>{t('fill.activeProviders')}</strong>{' '}
               <span style={{ fontWeight: 600, color: 'var(--albion-green)' }}>
                 {providers.filter(p => p.isActive).length}
               </span>
             </div>
             <div>
-              <strong style={{ color: 'var(--albion-text-dim)' }}>Highest Priority:</strong>{' '}
+              <strong style={{ color: 'var(--albion-text-dim)' }}>{t('fill.highestPriority')}</strong>{' '}
               <span style={{ fontWeight: 600, color: 'var(--albion-gold)' }}>
                 {Math.max(...providers.map(p => p.priority ?? 0))}
               </span>
             </div>
             <div>
-              <strong style={{ color: 'var(--albion-text-dim)' }}>Lowest Priority:</strong>{' '}
+              <strong style={{ color: 'var(--albion-text-dim)' }}>{t('fill.lowestPriority')}</strong>{' '}
               <span style={{ fontWeight: 600, color: 'var(--albion-red)' }}>
                 {Math.min(...providers.map(p => p.priority ?? 0))}
               </span>
@@ -152,11 +154,11 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX
       )}
 
       {providers.length === 0 ? (
-        <p className="text-dim">No fill providers registered yet.</p>
+        <p className="text-dim">{t('fill.noProviders')}</p>
       ) : (
         <div>
           <div style={{ marginBottom: '1rem', fontSize: '0.875rem', color: 'var(--albion-text-dim)' }}>
-            <strong>Sorted by Priority (Highest First)</strong>
+            <strong>{t('fill.sortedByPriority')}</strong>
           </div>
           {providers.map(provider => (
             <div 
@@ -173,7 +175,7 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <strong style={{ fontSize: '1rem' }}>
-                      {provider.user?.name || 'Unknown'}
+                      {provider.user?.name || t('common.unknown')}
                     </strong>
                     {!provider.isActive && (
                       <span style={{
@@ -184,7 +186,7 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX
                         fontWeight: 600,
                         color: 'var(--albion-red)'
                       }}>
-                        INACTIVE
+                        {t('common.inactive').toUpperCase()}
                       </span>
                     )}
                     <span style={{
@@ -198,7 +200,7 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX
                       fontSize: '0.75rem',
                       fontWeight: 600
                     }}>
-                      Priority: {provider.priority ?? 0}
+                      {t('fill.priorityLabel', { priority: provider.priority ?? 0 })}
                     </span>
                   </div>
                 </div>
@@ -211,7 +213,7 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX
                     }}
                     style={{ padding: '0.375rem 0.75rem', fontSize: '0.875rem' }}
                   >
-                    Add Points
+                    {t('fill.addPoints')}
                   </button>
                   <button
                     className="btn-secondary"
@@ -222,29 +224,29 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX
                       backgroundColor: provider.isActive ? 'rgba(192, 57, 43, 0.2)' : 'rgba(46, 204, 113, 0.2)'
                     }}
                   >
-                    {provider.isActive ? 'Deactivate' : 'Activate'}
+                    {provider.isActive ? t('fill.deactivate') : t('fill.activate')}
                   </button>
                 </div>
               </div>
 
               <div style={{ fontSize: '0.875rem', color: 'var(--albion-text-dim)' }}>
                 <div style={{ marginBottom: '0.5rem' }}>
-                  <strong>Provides:</strong>{' '}
-                  {provider.providesSlots && <span style={{ marginRight: '0.5rem' }}>Slots</span>}
-                  {provider.providesWeight && <span>Weight</span>}
-                  {!provider.providesSlots && !provider.providesWeight && <span>None</span>}
+                  <strong>{t('fill.providesLabel')}</strong>{' '}
+                  {provider.providesSlots && <span style={{ marginRight: '0.5rem' }}>{t('common.slots')}</span>}
+                  {provider.providesWeight && <span>{t('common.weight')}</span>}
+                  {!provider.providesSlots && !provider.providesWeight && <span>{t('common.none')}</span>}
                 </div>
 
                 {provider.providesSlots && (
                   <div style={{ marginBottom: '0.5rem' }}>
-                    <strong>Slot Fill:</strong>{' '}
+                    <strong>{t('fill.slotFillLabel')}</strong>{' '}
                     <span className="text-gold">{provider.slotOrigin}</span> → <span className="text-gold">{provider.slotTarget}</span>
                   </div>
                 )}
 
                 {provider.providesWeight && (
                   <div style={{ marginBottom: '0.5rem' }}>
-                    <strong>Weight Fill:</strong>{' '}
+                    <strong>{t('fill.weightFillLabel')}</strong>{' '}
                     <span className="text-gold">{provider.weightOrigin}</span> → <span className="text-gold">{provider.weightTarget}</span>
                   </div>
                 )}
@@ -269,7 +271,7 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX
           border: '1px solid var(--albion-gold)'
         }}>
           <h4 style={{ marginBottom: '1rem', color: 'var(--albion-gold)' }}>
-            Add Points for {selectedProvider.user?.name}
+            {t('fill.addPointsFor', { name: selectedProvider.user?.name })}
           </h4>
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ 
@@ -278,7 +280,7 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX
               fontWeight: 600,
               fontSize: '0.9375rem'
             }}>
-              Points
+              {t('common.points')}
             </label>
             <input
               type="number"
@@ -287,7 +289,7 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX
               style={{ width: '100%' }}
             />
             <p style={{ fontSize: '0.8125rem', color: 'var(--albion-text-dim)', marginTop: '0.25rem' }}>
-              Typically -1 for problems, but can be adjusted as needed
+              {t('fill.pointsHint')}
             </p>
           </div>
           <div style={{ marginBottom: '1rem' }}>
@@ -297,16 +299,16 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX
               fontWeight: 600,
               fontSize: '0.9375rem'
             }}>
-              Reason
+              {t('common.reason')}
             </label>
             <select
               value={pointsData.reason}
               onChange={(e) => setPointsData(prev => ({ ...prev, reason: e.target.value }))}
               style={{ width: '100%' }}
             >
-              <option value="problem">Problem (source/target issues)</option>
-              <option value="manual">Manual adjustment</option>
-              <option value="other">Other</option>
+              <option value="problem">{t('fill.reasonProblem')}</option>
+              <option value="manual">{t('fill.reasonManual')}</option>
+              <option value="other">{t('fill.reasonOther')}</option>
             </select>
           </div>
           <div style={{ marginBottom: '1rem' }}>
@@ -316,13 +318,13 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX
               fontWeight: 600,
               fontSize: '0.9375rem'
             }}>
-              Notes (optional)
+              {t('common.notesOptional')}
             </label>
             <textarea
               value={pointsData.notes}
               onChange={(e) => setPointsData(prev => ({ ...prev, notes: e.target.value }))}
               style={{ width: '100%', minHeight: '60px' }}
-              placeholder="Describe the issue or reason for points adjustment..."
+              placeholder={t('fill.notesPlaceholder')}
             />
           </div>
           <div className="flex" style={{ gap: '1rem' }}>
@@ -330,7 +332,7 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX
               className="btn-primary"
               onClick={() => handleAddPoints(selectedProvider.id)}
             >
-              Add Points
+              {t('fill.addPoints')}
             </button>
             <button
               className="btn-secondary"
@@ -340,7 +342,7 @@ export function FillProviderManager({ onUpdate }: FillProviderManagerProps): JSX
                 setPointsData({ points: -1, reason: 'problem', notes: '' });
               }}
             >
-              Cancel
+              {t('common.cancel')}
             </button>
           </div>
         </div>

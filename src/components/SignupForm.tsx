@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { Activity, Role, TransportSignupAttributes } from '../types';
 import { signupsApi } from '../lib/api';
@@ -13,6 +14,7 @@ interface SignupFormProps {
 
 export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning }: SignupFormProps): JSX.Element {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const isTransport = activity.type === 'transport';
   const [attributes, setAttributes] = useState<Record<string, unknown>>({});
   const [comment, setComment] = useState('');
@@ -51,12 +53,12 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
       if (isTransport) {
         // Validate required fields
         if (!origin.trim()) {
-          setError('Origin is required');
+          setError(t('signups.originRequired'));
           setLoading(false);
           return;
         }
         if (!goal.trim()) {
-          setError('Goal is required');
+          setError(t('signups.goalRequired'));
           setLoading(false);
           return;
         }
@@ -64,12 +66,12 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
         // Validate Carleon transport fields if checked
         if (transportFromCarleon) {
           if (!carleonOrigin.trim()) {
-            setError('Carleon Origin is required');
+            setError(t('signups.carleonOriginRequired'));
             setLoading(false);
             return;
           }
           if (!carleonGoal.trim()) {
-            setError('Carleon Goal is required');
+            setError(t('signups.carleonGoalRequired'));
             setLoading(false);
             return;
           }
@@ -103,7 +105,7 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
       });
       onSuccess();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to sign up');
+      setError(err instanceof Error ? err.message : t('signups.failedToSignup'));
     } finally {
       setLoading(false);
     }
@@ -125,7 +127,7 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
       border: '1px solid var(--albion-gold)'
     }}>
       <h3 style={{ marginBottom: '1rem', color: 'var(--albion-gold)' }}>
-        Sign up for {role.name}
+        {t('signups.signUpFor', { role: role.name })}
       </h3>
 
       {overlapWarning && (
@@ -153,12 +155,12 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
                 color: 'var(--albion-text)',
                 fontSize: '0.9375rem'
               }}>
-                Origin <span style={{ color: 'var(--albion-red)' }}>*</span>
+                {t('signups.origin')} <span style={{ color: 'var(--albion-red)' }}>*</span>
               </label>
               <textarea
                 value={origin}
                 onChange={(e) => setOrigin(e.target.value)}
-                placeholder="e.g., Gildeninsel Unchained, Tab Blackmarket"
+                placeholder={t('signups.originPlaceholder')}
                 style={{ width: '100%', minHeight: '80px' }}
                 required
               />
@@ -172,12 +174,12 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
                 color: 'var(--albion-text)',
                 fontSize: '0.9375rem'
               }}>
-                Goal <span style={{ color: 'var(--albion-red)' }}>*</span>
+                {t('signups.goal')} <span style={{ color: 'var(--albion-red)' }}>*</span>
               </label>
               <textarea
                 value={goal}
                 onChange={(e) => setGoal(e.target.value)}
-                placeholder="e.g., Insel WallyWaddles, zentrales Haus, Kisten an der NW Wand"
+                placeholder={t('signups.goalPlaceholder')}
                 style={{ width: '100%', minHeight: '80px' }}
                 required
               />
@@ -192,7 +194,7 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
                   color: 'var(--albion-text)',
                   fontSize: '0.9375rem'
                 }}>
-                  Slots
+                  {t('signups.slots')}
                 </label>
                 <input
                   type="number"
@@ -211,7 +213,7 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
                   color: 'var(--albion-text)',
                   fontSize: '0.9375rem'
                 }}>
-                  Gewicht (t)
+                  {t('signups.weightLabel')}
                 </label>
                 <input
                   type="number"
@@ -240,7 +242,7 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
                   onChange={(e) => setTransportFromCarleon(e.target.checked)}
                   style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
                 />
-                Transport from Carleon
+                {t('signups.transportFromCarleon')}
               </label>
             </div>
 
@@ -254,12 +256,12 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
                     color: 'var(--albion-text)',
                     fontSize: '0.9375rem'
                   }}>
-                    Origin <span style={{ color: 'var(--albion-red)' }}>*</span>
+                    {t('signups.origin')} <span style={{ color: 'var(--albion-red)' }}>*</span>
                   </label>
                   <textarea
                     value={carleonOrigin}
                     onChange={(e) => setCarleonOrigin(e.target.value)}
-                    placeholder="e.g., Gildeninsel Unchained, Tab Blackmarket"
+                    placeholder={t('signups.originPlaceholder')}
                     style={{ width: '100%', minHeight: '80px' }}
                     required
                   />
@@ -273,12 +275,12 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
                     color: 'var(--albion-text)',
                     fontSize: '0.9375rem'
                   }}>
-                    Goal <span style={{ color: 'var(--albion-red)' }}>*</span>
+                    {t('signups.goal')} <span style={{ color: 'var(--albion-red)' }}>*</span>
                   </label>
                   <textarea
                     value={carleonGoal}
                     onChange={(e) => setCarleonGoal(e.target.value)}
-                    placeholder="e.g., Insel WallyWaddles, zentrales Haus, Kisten an der NW Wand"
+                    placeholder={t('signups.goalPlaceholder')}
                     style={{ width: '100%', minHeight: '80px' }}
                     required
                   />
@@ -293,7 +295,7 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
                       color: 'var(--albion-text)',
                       fontSize: '0.9375rem'
                     }}>
-                      Slots
+                      {t('signups.slots')}
                     </label>
                     <input
                       type="number"
@@ -312,7 +314,7 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
                       color: 'var(--albion-text)',
                       fontSize: '0.9375rem'
                     }}>
-                      Gewicht (t)
+                      {t('signups.weightLabel')}
                     </label>
                     <input
                       type="number"
@@ -335,13 +337,13 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
                 color: 'var(--albion-text)',
                 fontSize: '0.9375rem'
               }}>
-                Preferred Partner <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
+                {t('signups.preferredPartner')} <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>({t('common.optional')})</span>
               </label>
               <input
                 type="text"
                 value={preferredPartner}
                 onChange={(e) => setPreferredPartner(e.target.value)}
-                placeholder="Ingame Name"
+                placeholder={t('signups.preferredPartnerPlaceholder')}
                 style={{ width: '100%' }}
               />
             </div>
@@ -364,7 +366,7 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
                       onChange={(e) => setNeedGear(e.target.checked)}
                       style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
                     />
-                    Need Gear
+                    {t('signups.needGear')}
                   </label>
                 </div>
 
@@ -399,7 +401,7 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
                 color: 'var(--albion-gold)',
                 fontSize: '0.9375rem'
               }}>
-                Requirements:
+                {t('roles.requirements')}:
               </p>
               {Object.entries(role.attributes).map(([key, value]) => (
                 <div key={key} style={{ marginBottom: '1rem' }}>
@@ -409,13 +411,13 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
                     fontWeight: 500,
                     fontSize: '0.9375rem'
                   }}>
-                    {key}: <span className="text-gold">{String(value)}</span> <span className="text-dim">(confirm you meet this)</span>
+                    {key}: <span className="text-gold">{String(value)}</span> <span className="text-dim">({t('signups.confirmMeetThis')})</span>
                   </label>
                   <input
                     type="text"
                     value={attributes[key] || ''}
                     onChange={(e) => handleAttributeChange(key, e.target.value)}
-                    placeholder={`Your ${key.toLowerCase()}`}
+                    placeholder={t('signups.yourKey', { key: key.toLowerCase() })}
                     style={{ width: '100%' }}
                   />
                 </div>
@@ -433,13 +435,13 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
               color: 'var(--albion-text)',
               fontSize: '0.9375rem'
             }}>
-              Comment <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
+              {t('common.comment')} <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>({t('common.optional')})</span>
             </label>
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               style={{ width: '100%', minHeight: '100px' }}
-              placeholder="Any additional information..."
+              placeholder={t('signups.additionalInfo')}
             />
           </div>
         )}

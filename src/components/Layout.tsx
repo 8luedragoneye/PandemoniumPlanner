@@ -1,7 +1,9 @@
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { BugReportPanel } from './BugReportPanel';
+import { LanguageToggle } from './LanguageToggle';
 
 interface LayoutProps {
   children: ReactNode;
@@ -9,6 +11,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps): JSX.Element {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
 
   const handleLogout = (): void => {
     logout();
@@ -41,10 +44,11 @@ export function Layout({ children }: LayoutProps): JSX.Element {
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text'
             }}>
-              NOX Planer
+              {t('layout.appTitle')}
             </h1>
           </Link>
           <div className="flex" style={{ gap: '1.25rem', alignItems: 'center' }}>
+            <LanguageToggle />
             <span className="text-dim" style={{ 
               fontSize: '0.9375rem',
               fontWeight: 500
@@ -52,7 +56,7 @@ export function Layout({ children }: LayoutProps): JSX.Element {
               {user?.name || user?.email}
             </span>
             <button className="btn-secondary" onClick={handleLogout}>
-              Logout
+              {t('layout.logout')}
             </button>
           </div>
         </div>

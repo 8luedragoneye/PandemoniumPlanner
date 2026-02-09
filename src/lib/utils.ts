@@ -1,7 +1,13 @@
 import { formatInTimeZone } from 'date-fns-tz';
 import { de } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
+import i18n from '../i18n';
 import { Activity, Signup, TransportSignupAttributes } from '../types';
 import { TIMEZONE_CET, DEFAULT_ACTIVITY_DURATION_HOURS } from './constants';
+
+function getDateLocale() {
+  return i18n.language?.startsWith('de') ? de : enUS;
+}
 
 /**
  * Format date in Central European Time for datetime-local input
@@ -16,7 +22,7 @@ export function formatCETDate(date: string | Date): string {
  */
 export function formatDateInput(date: string | Date): string {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return formatInTimeZone(dateObj, TIMEZONE_CET, 'dd MM yyyy', { locale: de });
+  return formatInTimeZone(dateObj, TIMEZONE_CET, 'dd MM yyyy', { locale: getDateLocale() });
 }
 
 /**
@@ -43,7 +49,9 @@ export function parseDateInput(dateStr: string): Date | null {
  */
 export function formatDisplayDate(date: string | Date): string {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return formatInTimeZone(dateObj, TIMEZONE_CET, 'dd MM yyyy HH:mm', { locale: de }) + ' Uhr';
+  const formatted = formatInTimeZone(dateObj, TIMEZONE_CET, 'dd MM yyyy HH:mm', { locale: getDateLocale() });
+  const suffix = i18n.language?.startsWith('de') ? ' Uhr' : '';
+  return formatted + suffix;
 }
 
 /**

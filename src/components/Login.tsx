@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 
 export function Login(): JSX.Element {
+  const { t } = useTranslation();
   const { login, register } = useAuth();
   const [isRegister, setIsRegister] = useState(false);
   const [name, setName] = useState('');
@@ -15,7 +17,7 @@ export function Login(): JSX.Element {
 
     try {
       if (!name.trim()) {
-        setError('Name is required');
+        setError(t('auth.nameRequired'));
         setLoading(false);
         return;
       }
@@ -27,7 +29,7 @@ export function Login(): JSX.Element {
       }
     } catch (err: unknown) {
       console.error('Auth error:', err);
-      setError(err instanceof Error ? err.message : 'Authentication failed');
+      setError(err instanceof Error ? err.message : t('auth.authFailed'));
     } finally {
       setLoading(false);
     }
@@ -55,10 +57,10 @@ export function Login(): JSX.Element {
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text'
           }}>
-            NOX Planer
+            {t('layout.appTitle')}
           </h1>
           <h2 className="text-dim" style={{ fontSize: '1.125rem', fontWeight: 500 }}>
-            {isRegister ? 'Create Account' : 'Welcome Back'}
+            {isRegister ? t('auth.createAccount') : t('auth.welcomeBack')}
           </h2>
         </div>
         
@@ -71,7 +73,7 @@ export function Login(): JSX.Element {
               color: 'var(--albion-text)',
               fontSize: '0.9375rem'
             }}>
-              Player Name
+              {t('auth.playerName')}
             </label>
             <input
               type="text"
@@ -79,7 +81,7 @@ export function Login(): JSX.Element {
               onChange={(e) => setName(e.target.value)}
               required
               style={{ width: '100%' }}
-              placeholder="Enter your player name"
+              placeholder={t('auth.enterPlayerName')}
               autoFocus
             />
           </div>
@@ -104,7 +106,7 @@ export function Login(): JSX.Element {
             style={{ width: '100%' }}
             disabled={loading}
           >
-            {loading ? 'Loading...' : (isRegister ? 'Register' : 'Login')}
+            {loading ? t('common.loading') : (isRegister ? t('auth.register') : t('auth.login'))}
           </button>
         </form>
       </div>

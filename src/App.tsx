@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from './contexts/AuthContext';
 import { Login } from './components/Login';
 import { ActivityList } from './components/ActivityList';
@@ -8,6 +9,7 @@ import { ActivityDetail } from './components/ActivityDetail';
 import { Layout } from './components/Layout';
 
 function App() {
+  const { t } = useTranslation();
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
@@ -28,7 +30,7 @@ function App() {
           borderWidth: '3px',
           color: 'var(--albion-gold)'
         }}></div>
-        <p className="text-dim" style={{ fontSize: '1.125rem' }}>Loading...</p>
+        <p className="text-dim" style={{ fontSize: '1.125rem' }}>{t('common.loading')}</p>
       </div>
     );
   }

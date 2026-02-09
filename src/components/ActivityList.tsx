@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useActivities } from '../hooks/useActivities';
 import { useAuth } from '../contexts/AuthContext';
 import { Activity } from '../types';
@@ -11,18 +12,25 @@ import { ACTIVITY_TYPE_CATEGORIES, META_TAGS } from '../lib/constants';
 type FilterType = 'all' | 'my-activities' | 'signed-up' | 'upcoming' | 'past';
 
 const FILTER_OPTIONS = [
-  { value: 'all', label: 'All' },
-  { value: 'my-activities', label: 'My Activities' },
-  { value: 'signed-up', label: 'Signed Up' },
-  { value: 'upcoming', label: 'Upcoming' },
-  { value: 'past', label: 'Past' },
+  { value: 'all', label: 'filters.all' },
+  { value: 'my-activities', label: 'filters.myActivities' },
+  { value: 'signed-up', label: 'filters.signedUp' },
+  { value: 'upcoming', label: 'filters.upcoming' },
+  { value: 'past', label: 'filters.past' },
 ] as const;
 
 export function ActivityList(): JSX.Element {
+  const { t } = useTranslation();
   const { activities, roles, signups, loading } = useActivities();
   const { user } = useAuth();
   const [filter, setFilter] = useState<FilterType>('all');
   const [selectedTypeFilters, setSelectedTypeFilters] = useState<string[]>([]);
+
+  const categoryTranslations: Record<string, string> = {
+    'PvE Activities': t('activityTypes.pveActivities'),
+    'PvP Activities': t('activityTypes.pvpActivities'),
+    'Mixed (PvE & PvP)': t('activityTypes.mixedActivities'),
+  };
 
   const filteredActivities = useMemo(() => {
     if (!user) return [];
@@ -94,7 +102,7 @@ export function ActivityList(): JSX.Element {
           borderWidth: '3px',
           color: 'var(--albion-gold)'
         }}></div>
-        <p className="text-dim" style={{ fontSize: '1.125rem' }}>Loading activities...</p>
+        <p className="text-dim" style={{ fontSize: '1.125rem' }}>{t('activities.loadingActivities')}</p>
       </div>
     );
   }
@@ -115,10 +123,10 @@ export function ActivityList(): JSX.Element {
             fontSize: '1rem',
             fontWeight: 600
           }}>
-            Filter by Type
+            {t('activities.filterByType')}
           </h3>
           <p style={{ fontSize: '0.75rem', color: 'var(--albion-text-dim)', marginBottom: '1rem' }}>
-            Shows activities matching ANY selected type
+            {t('activities.filterByTypeDesc')}
           </p>
           
           {/* Meta tags (PvE/PvP) filter */}
@@ -158,7 +166,7 @@ export function ActivityList(): JSX.Element {
                       : 'var(--albion-text)',
                     fontWeight: 600
                   }}>
-                    {tag}
+                    {t(`activityTypes.${tag}`) || tag}
                   </span>
                 </label>
               ))}
@@ -182,7 +190,7 @@ export function ActivityList(): JSX.Element {
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em'
                 }}>
-                  {category}
+                  {categoryTranslations[category] || category}
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                   {types.map((type) => (
@@ -208,7 +216,7 @@ export function ActivityList(): JSX.Element {
                         style={{ width: '0.75rem', height: '0.75rem', cursor: 'pointer' }}
                       />
                       <span style={{ color: selectedTypeFilters.includes(type) ? 'var(--albion-gold)' : 'var(--albion-text)' }}>
-                        {type}
+                        {t(`activityTypes.${type}`) || type}
                       </span>
                     </label>
                   ))}
@@ -221,7 +229,7 @@ export function ActivityList(): JSX.Element {
             <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--albion-border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--albion-text-dim)' }}>
-                  Selected ({selectedTypeFilters.length})
+                  {t('activities.selected', { count: selectedTypeFilters.length })}
                 </span>
                 <button
                   onClick={clearTypeFilters}
@@ -234,7 +242,7 @@ export function ActivityList(): JSX.Element {
                     textDecoration: 'underline'
                   }}
                 >
-                  Clear all
+                  {t('activities.clearAll')}
                 </button>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
@@ -253,7 +261,7 @@ export function ActivityList(): JSX.Element {
                       gap: '0.25rem'
                     }}
                   >
-                    {type}
+                    {t(`activityTypes.${type}`) || type}
                     <button
                       onClick={() => handleTypeFilterToggle(type)}
                       style={{
@@ -291,26 +299,26 @@ export function ActivityList(): JSX.Element {
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text'
             }}>
-              Guild Activities
+              {t('activities.guildActivities')}
             </h1>
             <p className="text-dim" style={{ fontSize: '1rem' }}>
-              Manage and join guild activities
+              {t('activities.manageAndJoin')}
             </p>
           </div>
           <Link to="/create" className="btn-primary" style={{ marginTop: '0.5rem' }}>
-            + Create Activity
+            {t('activities.createActivity')}
           </Link>
         </div>
 
         <FilterButtons
           currentFilter={filter}
-          filters={FILTER_OPTIONS}
+          filters={FILTER_OPTIONS.map(f => ({ value: f.value, label: t(f.label) }))}
           onFilterChange={setFilter}
         />
 
         {filteredActivities.length === 0 ? (
           <div className="card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-            <p className="text-dim" style={{ fontSize: '1.125rem' }}>No activities found.</p>
+            <p className="text-dim" style={{ fontSize: '1.125rem' }}>{t('activities.noActivities')}</p>
           </div>
         ) : (
           <div>

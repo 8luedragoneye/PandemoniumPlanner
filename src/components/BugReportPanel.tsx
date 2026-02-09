@@ -1,14 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { bugReportsApi } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { ApiBugReport } from '../lib/apiTypes';
-
-const STATUS_LABELS: Record<string, string> = {
-  open: 'Open',
-  in_progress: 'In Progress',
-  resolved: 'Resolved',
-  closed: 'Closed',
-};
 
 const STATUS_COLORS: Record<string, string> = {
   open: '#c0392b',
@@ -29,6 +23,7 @@ function formatDate(dateStr: string): string {
 }
 
 export function BugReportPanel(): JSX.Element {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [reports, setReports] = useState<ApiBugReport[]>([]);
@@ -39,6 +34,13 @@ export function BugReportPanel(): JSX.Element {
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<'all' | 'open' | 'mine'>('all');
+
+  const STATUS_LABELS: Record<string, string> = {
+    open: t('bugs.statusOpen'),
+    in_progress: t('bugs.statusInProgress'),
+    resolved: t('bugs.statusResolved'),
+    closed: t('bugs.statusClosed'),
+  };
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
@@ -63,11 +65,11 @@ export function BugReportPanel(): JSX.Element {
     setError('');
 
     if (!title.trim()) {
-      setError('Title is required');
+      setError(t('bugs.titleRequired'));
       return;
     }
     if (!description.trim()) {
-      setError('Description is required');
+      setError(t('bugs.descriptionRequired'));
       return;
     }
 
@@ -79,7 +81,7 @@ export function BugReportPanel(): JSX.Element {
       setShowForm(false);
       await fetchReports();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit bug report');
+      setError(err instanceof Error ? err.message : t('bugs.failedToSubmit'));
     } finally {
       setSubmitting(false);
     }
@@ -106,7 +108,7 @@ export function BugReportPanel(): JSX.Element {
       <button
         className="bug-report-fab"
         onClick={() => setIsOpen(!isOpen)}
-        title="Report a Bug"
+        title={t('bugs.reportABug')}
         style={{
           position: 'fixed',
           bottom: '1.5rem',
@@ -198,14 +200,14 @@ export function BugReportPanel(): JSX.Element {
             color: 'var(--albion-gold)',
             letterSpacing: '-0.025em',
           }}>
-            Bug Reports
+            {t('bugs.bugReports')}
           </h2>
           <button
             className="btn-primary"
             onClick={() => { setShowForm(!showForm); setError(''); }}
             style={{ padding: '0.5rem 1rem', fontSize: '0.8125rem' }}
           >
-            {showForm ? 'Cancel' : '+ Report Bug'}
+            {showForm ? t('bugs.cancelForm') : t('bugs.reportBug')}
           </button>
         </div>
 
@@ -228,13 +230,13 @@ export function BugReportPanel(): JSX.Element {
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
                 }}>
-                  Title
+                  {t('bugs.title')}
                 </label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Brief summary of the bug"
+                  placeholder={t('bugs.titlePlaceholder')}
                   style={{ borderRadius: '8px', padding: '0.625rem 0.875rem', fontSize: '0.875rem' }}
                 />
               </div>
@@ -248,12 +250,12 @@ export function BugReportPanel(): JSX.Element {
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
                 }}>
-                  Description
+                  {t('bugs.description')}
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Steps to reproduce, expected vs actual behavior..."
+                  placeholder={t('bugs.descriptionPlaceholder')}
                   style={{
                     borderRadius: '8px',
                     padding: '0.625rem 0.875rem',
@@ -282,10 +284,10 @@ export function BugReportPanel(): JSX.Element {
                 {submitting ? (
                   <>
                     <span className="loading-spinner" style={{ width: '0.875rem', height: '0.875rem' }}></span>
-                    Submitting...
+                    {t('bugs.submitting')}
                   </>
                 ) : (
-                  'Submit Bug Report'
+                  t('bugs.submitBugReport')
                 )}
               </button>
             </form>
@@ -320,7 +322,7 @@ export function BugReportPanel(): JSX.Element {
                 transition: 'all 0.2s ease',
               }}
             >
-              {f === 'all' ? 'All' : f === 'open' ? 'Open' : 'Mine'}
+              {f === 'all' ? t('bugs.filterAll') : f === 'open' ? t('bugs.filterOpen') : t('bugs.filterMine')}
             </button>
           ))}
         </div>
@@ -340,7 +342,7 @@ export function BugReportPanel(): JSX.Element {
                 color: 'var(--albion-gold)',
                 margin: '0 auto',
               }}></div>
-              <p className="text-dim" style={{ marginTop: '0.75rem', fontSize: '0.875rem' }}>Loading reports...</p>
+              <p className="text-dim" style={{ marginTop: '0.75rem', fontSize: '0.875rem' }}>{t('bugs.loadingReports')}</p>
             </div>
           ) : filteredReports.length === 0 ? (
             <div style={{
@@ -348,9 +350,9 @@ export function BugReportPanel(): JSX.Element {
               padding: '2rem 0',
               color: 'var(--albion-text-dim)',
             }}>
-              <p style={{ fontSize: '0.9375rem', fontWeight: 500 }}>No bug reports found</p>
+              <p style={{ fontSize: '0.9375rem', fontWeight: 500 }}>{t('bugs.noReports')}</p>
               <p style={{ fontSize: '0.8125rem', marginTop: '0.375rem' }}>
-                {filter === 'mine' ? "You haven't reported any bugs yet." : 'No reports match this filter.'}
+                {filter === 'mine' ? t('bugs.noMineReports') : t('bugs.noFilterReports')}
               </p>
             </div>
           ) : (
@@ -420,8 +422,8 @@ export function BugReportPanel(): JSX.Element {
                     color: 'var(--albion-text-dim)',
                   }}>
                     <span>
-                      by <span style={{ color: 'var(--albion-gold)', fontWeight: 500 }}>
-                        {report.reporter?.name || 'Unknown'}
+                      {t('bugs.by')} <span style={{ color: 'var(--albion-gold)', fontWeight: 500 }}>
+                        {report.reporter?.name || t('common.unknown')}
                       </span>
                       {' · '}
                       {formatDate(report.createdAt)}
@@ -444,9 +446,9 @@ export function BugReportPanel(): JSX.Element {
                         }}
                         onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
                         onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.7')}
-                        title="Delete this bug report"
+                        title={t('bugs.deleteTooltip')}
                       >
-                        Delete
+                        {t('bugs.delete')}
                       </button>
                     )}
                   </div>

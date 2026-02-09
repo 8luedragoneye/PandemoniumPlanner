@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FillProvider, FillAssignment, TransportPair } from '../types';
 import { fillProvidersApi, fillAssignmentsApi } from '../lib/api';
 import { transformFillProvider, transformFillAssignment } from '../lib/transformers';
@@ -11,6 +12,7 @@ interface FillAssignmentManagerProps {
 }
 
 export function FillAssignmentManager({ activityId, pairs, onUpdate }: FillAssignmentManagerProps): JSX.Element {
+  const { t } = useTranslation();
   const [providers, setProviders] = useState<FillProvider[]>([]);
   const [assignments, setAssignments] = useState<FillAssignment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,14 +41,14 @@ export function FillAssignmentManager({ activityId, pairs, onUpdate }: FillAssig
       setAssignments(apiAssignments.map(transformFillAssignment));
       setError('');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load fill data');
+      setError(err instanceof Error ? err.message : t('fill.loadingAssignments'));
     } finally {
       setLoading(false);
     }
   };
 
   const handleAutoAssign = async () => {
-    if (!confirm('Auto-assign fill to all pairs? This will assign providers based on priority.')) {
+    if (!confirm(t('fill.confirmAutoAssign'))) {
       return;
     }
 
@@ -57,7 +59,7 @@ export function FillAssignmentManager({ activityId, pairs, onUpdate }: FillAssig
       await loadData();
       if (onUpdate) onUpdate();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to auto-assign fill');
+      setError(err instanceof Error ? err.message : t('fill.failedToAutoAssign'));
     } finally {
       setAutoAssigning(false);
     }
@@ -77,12 +79,12 @@ export function FillAssignmentManager({ activityId, pairs, onUpdate }: FillAssig
       await loadData();
       if (onUpdate) onUpdate();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to assign fill');
+      setError(err instanceof Error ? err.message : t('fill.failedToAssign'));
     }
   };
 
   const handleRemoveAssignment = async (assignmentId: string) => {
-    if (!confirm('Remove this fill assignment?')) {
+    if (!confirm(t('fill.confirmRemove'))) {
       return;
     }
 
@@ -92,7 +94,7 @@ export function FillAssignmentManager({ activityId, pairs, onUpdate }: FillAssig
       await loadData();
       if (onUpdate) onUpdate();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to remove assignment');
+      setError(err instanceof Error ? err.message : t('fill.failedToRemoveAssignment'));
     }
   };
 
@@ -113,14 +115,14 @@ export function FillAssignmentManager({ activityId, pairs, onUpdate }: FillAssig
   };
 
   if (loading) {
-    return <div className="text-dim">Loading fill assignments...</div>;
+    return <div className="text-dim">{t('fill.loadingAssignments')}</div>;
   }
 
   return (
     <div style={{ marginTop: '2rem' }}>
       <div className="flex-between" style={{ marginBottom: '1rem' }}>
         <h3 style={{ color: 'var(--albion-gold)' }}>
-          Fill Assignments
+          {t('fill.fillAssignments')}
         </h3>
         <button
           className="btn-primary"
@@ -128,7 +130,7 @@ export function FillAssignmentManager({ activityId, pairs, onUpdate }: FillAssig
           disabled={autoAssigning || pairs.length === 0}
           style={{ padding: '0.5rem 1rem' }}
         >
-          {autoAssigning ? 'Auto-Assigning...' : 'Auto-Assign Fill'}
+          {autoAssigning ? t('fill.autoAssigning') : t('fill.autoAssignFill')}
         </button>
       </div>
 
@@ -147,14 +149,14 @@ export function FillAssignmentManager({ activityId, pairs, onUpdate }: FillAssig
       )}
 
       {pairs.length === 0 ? (
-        <p className="text-dim">No pairs found. Create pairs first before assigning fill.</p>
+        <p className="text-dim">{t('fill.noPairsFound')}</p>
       ) : (
         <div>
           {pairs.map(pair => {
             const slotAssignment = getAssignmentForPair(pair.id, 'slots');
             const weightAssignment = getAssignmentForPair(pair.id, 'weight');
-            const fighterName = pair.expand?.fighter?.expand?.player?.name || 'Unknown';
-            const transporterName = pair.expand?.transporter?.expand?.player?.name || 'Unknown';
+            const fighterName = pair.expand?.fighter?.expand?.player?.name || t('common.unknown');
+            const transporterName = pair.expand?.transporter?.expand?.player?.name || t('common.unknown');
 
             return (
               <div
@@ -168,7 +170,7 @@ export function FillAssignmentManager({ activityId, pairs, onUpdate }: FillAssig
                 }}
               >
                 <div style={{ marginBottom: '1rem', fontWeight: 600, fontSize: '0.9375rem', color: 'var(--albion-gold)' }}>
-                  Pair: {fighterName} + {transporterName}
+                  {t('fill.pair', { fighter: fighterName, transporter: transporterName })}
                 </div>
 
                 <div>
@@ -179,7 +181,7 @@ export function FillAssignmentManager({ activityId, pairs, onUpdate }: FillAssig
                     fontSize: '0.875rem',
                     color: 'var(--albion-text)'
                   }}>
-                    Fill Provider
+                    {t('fill.fillProvider')}
                   </label>
                   {slotAssignment ? (
                     <div style={{
@@ -192,10 +194,10 @@ export function FillAssignmentManager({ activityId, pairs, onUpdate }: FillAssig
                     }}>
                       <div>
                         <div style={{ fontWeight: 600 }}>
-                          {slotAssignment.expand?.provider?.user?.name || 'Unknown'}
+                          {slotAssignment.expand?.provider?.user?.name || t('common.unknown')}
                         </div>
                         <div style={{ fontSize: '0.8125rem', color: 'var(--albion-text-dim)' }}>
-                          Priority: {slotAssignment.expand?.provider?.priority ?? 0}
+                          {t('fill.priorityLabel', { priority: slotAssignment.expand?.provider?.priority ?? 0 })}
                         </div>
                       </div>
                       <button
@@ -203,7 +205,7 @@ export function FillAssignmentManager({ activityId, pairs, onUpdate }: FillAssig
                         onClick={() => handleRemoveAssignment(slotAssignment.id)}
                         style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                       >
-                        Remove
+                        {t('common.remove')}
                       </button>
                     </div>
                   ) : (
@@ -216,7 +218,7 @@ export function FillAssignmentManager({ activityId, pairs, onUpdate }: FillAssig
                       value=""
                       style={{ width: '100%' }}
                     >
-                      <option value="">Select provider...</option>
+                      <option value="">{t('fill.selectProvider')}</option>
                       {getSlotProviders().map(provider => {
                         const count = getProviderAssignmentCount(provider.id, 'slots');
                         return (
@@ -225,7 +227,7 @@ export function FillAssignmentManager({ activityId, pairs, onUpdate }: FillAssig
                             value={provider.id}
                             disabled={count >= MAX_FILL_ASSIGNMENTS_PER_PROVIDER}
                           >
-                            {provider.user?.name || 'Unknown'} (Priority: {provider.priority ?? 0}){count >= MAX_FILL_ASSIGNMENTS_PER_PROVIDER ? ' - Max assignments' : ''}
+                            {provider.user?.name || t('common.unknown')} ({t('fill.priorityLabel', { priority: provider.priority ?? 0 })}){count >= MAX_FILL_ASSIGNMENTS_PER_PROVIDER ? ` - ${t('fill.maxAssignments')}` : ''}
                           </option>
                         );
                       })}

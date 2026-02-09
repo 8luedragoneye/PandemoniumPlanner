@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Signup, TransportPair, TransportSignupAttributes, FillAssignment } from '../types';
 import { pairsApi, fillAssignmentsApi } from '../lib/api';
 import { transformPair, transformFillAssignment } from '../lib/transformers';
@@ -11,6 +12,7 @@ interface TransportPairManagerProps {
 }
 
 export function TransportPairManager({ activityId, signups, onUpdate }: TransportPairManagerProps): JSX.Element {
+  const { t } = useTranslation();
   const [pairs, setPairs] = useState<TransportPair[]>([]);
   const [fillAssignments, setFillAssignments] = useState<FillAssignment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +40,7 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
       setPairs(apiPairs.map(transformPair));
       setError('');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load pairs');
+      setError(err instanceof Error ? err.message : t('transport.failedToLoadPairs'));
     } finally {
       setLoading(false);
     }
@@ -72,7 +74,7 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
 
   const handleCreatePair = async () => {
     if (!selectedFighter || !selectedTransporter) {
-      setError('Please select both a fighter and a transporter');
+      setError(t('transport.selectBoth'));
       return;
     }
 
@@ -89,12 +91,12 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
       await loadFillAssignments();
       if (onUpdate) onUpdate();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to create pair');
+      setError(err instanceof Error ? err.message : t('transport.failedToCreatePair'));
     }
   };
 
   const handleDeletePair = async (pairId: string) => {
-    if (!confirm('Unpair these participants?')) return;
+    if (!confirm(t('transport.confirmUnpair'))) return;
 
     try {
       setError('');
@@ -103,7 +105,7 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
       await loadFillAssignments();
       if (onUpdate) onUpdate();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to delete pair');
+      setError(err instanceof Error ? err.message : t('transport.failedToDeletePair'));
     }
   };
 
@@ -200,7 +202,7 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
   };
 
   if (loading) {
-    return <div className="text-dim">Loading pairs...</div>;
+    return <div className="text-dim">{t('transport.loadingPairs')}</div>;
   }
 
   return (
@@ -227,7 +229,7 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
             color: 'var(--albion-gold)',
             fontSize: '1.125rem'
           }}>
-            Paired ({pairs.length})
+            {t('transport.paired', { count: pairs.length })}
           </h3>
           <div style={{ display: 'grid', gap: '1rem' }}>
             {pairs.map(pair => {
@@ -255,8 +257,8 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
                     alignItems: 'center'
                   }}>
                     <div>
-                      <strong className="text-gold">Fighter:</strong>
-                      <div>{fighter?.expand?.player?.name || 'Unknown'}</div>
+                      <strong className="text-gold">{t('transport.fighterLabel')}</strong>
+                      <div>{fighter?.expand?.player?.name || t('common.unknown')}</div>
                       {fighterAttrs?.weaponType && (
                         <div className="text-dim" style={{ fontSize: '0.875rem' }}>
                           {fighterAttrs.weaponType}
@@ -264,8 +266,8 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
                       )}
                     </div>
                     <div>
-                      <strong className="text-gold">Transporter:</strong>
-                      <div>{transporter?.expand?.player?.name || 'Unknown'}</div>
+                      <strong className="text-gold">{t('transport.transporterLabel')}</strong>
+                      <div>{transporter?.expand?.player?.name || t('common.unknown')}</div>
                     </div>
                     <div>
                       <button
@@ -273,7 +275,7 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
                         onClick={() => handleDeletePair(pair.id)}
                         style={{ padding: '0.5rem 1rem' }}
                       >
-                        Unpair
+                        {t('transport.unpair')}
                       </button>
                     </div>
                   </div>
@@ -284,7 +286,7 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
                       borderTop: '1px solid var(--albion-border)',
                       fontSize: '0.875rem'
                     }}>
-                      <strong style={{ color: 'var(--albion-gold)' }}>Fill Assignments:</strong>
+                      <strong style={{ color: 'var(--albion-gold)' }}>{t('transport.fillAssignmentsLabel')}</strong>
                       <div style={{ marginTop: '0.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                         {fills.slots && (
                           <div style={{
@@ -292,8 +294,8 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
                             backgroundColor: 'var(--albion-dark)',
                             borderRadius: '4px'
                           }}>
-                            <span style={{ fontWeight: 600, color: 'var(--albion-gold)' }}>Slots:</span>{' '}
-                            {fills.slots.expand?.provider?.user?.name || 'Unknown'}
+                            <span style={{ fontWeight: 600, color: 'var(--albion-gold)' }}>{t('signups.slotsLabel')}</span>{' '}
+                            {fills.slots.expand?.provider?.user?.name || t('common.unknown')}
                           </div>
                         )}
                         {fills.weight && (
@@ -302,8 +304,8 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
                             backgroundColor: 'var(--albion-dark)',
                             borderRadius: '4px'
                           }}>
-                            <span style={{ fontWeight: 600, color: 'var(--albion-gold)' }}>Weight:</span>{' '}
-                            {fills.weight.expand?.provider?.user?.name || 'Unknown'}
+                            <span style={{ fontWeight: 600, color: 'var(--albion-gold)' }}>{t('signups.weightLabelColon')}</span>{' '}
+                            {fills.weight.expand?.provider?.user?.name || t('common.unknown')}
                           </div>
                         )}
                       </div>
@@ -323,7 +325,7 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
           color: 'var(--albion-gold)',
           fontSize: '1.125rem'
         }}>
-          Create Pair
+          {t('transport.createPair')}
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
           <div>
@@ -333,20 +335,20 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
               fontWeight: 600,
               fontSize: '0.9375rem'
             }}>
-              Fighter
+              {t('transport.fighter')}
             </label>
             <select
               value={selectedFighter || ''}
               onChange={(e) => setSelectedFighter(e.target.value || null)}
               style={{ width: '100%' }}
             >
-              <option value="">Select Fighter...</option>
+              <option value="">{t('transport.selectFighter')}</option>
               {unpairedFighters.map(signup => {
                 const attrs = getTransportAttributes(signup);
                 const preferred = getPreferredPartnerMatch(signup);
                 return (
                   <option key={signup.id} value={signup.id}>
-                    {signup.expand?.player?.name || 'Unknown'}
+                    {signup.expand?.player?.name || t('common.unknown')}
                     {attrs?.weaponType && ` (${attrs.weaponType})`}
                     {preferred && ' ⭐'}
                   </option>
@@ -361,19 +363,19 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
               fontWeight: 600,
               fontSize: '0.9375rem'
             }}>
-              Transporter
+              {t('transport.transporter')}
             </label>
             <select
               value={selectedTransporter || ''}
               onChange={(e) => setSelectedTransporter(e.target.value || null)}
               style={{ width: '100%' }}
             >
-              <option value="">Select Transporter...</option>
+              <option value="">{t('transport.selectTransporter')}</option>
               {unpairedTransporters.map(signup => {
                 const preferred = getPreferredPartnerMatch(signup);
                 return (
                   <option key={signup.id} value={signup.id}>
-                    {signup.expand?.player?.name || 'Unknown'}
+                    {signup.expand?.player?.name || t('common.unknown')}
                     {preferred && ' ⭐'}
                   </option>
                 );
@@ -386,7 +388,7 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
           onClick={handleCreatePair}
           disabled={!selectedFighter || !selectedTransporter}
         >
-          Create Pair
+          {t('transport.createPairBtn')}
         </button>
       </div>
 
@@ -398,10 +400,10 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
             color: 'var(--albion-gold)',
             fontSize: '1.125rem'
           }}>
-            Unpaired Fighters ({unpairedFighters.length})
+            {t('transport.unpairedFighters', { count: unpairedFighters.length })}
           </h3>
           {unpairedFighters.length === 0 ? (
-            <p className="text-dim">All fighters are paired</p>
+            <p className="text-dim">{t('transport.allFightersPaired')}</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {unpairedFighters.map(signup => {
@@ -431,7 +433,7 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
                     )}
                     {attrs?.preferredPartner && (
                       <div className="text-dim" style={{ fontSize: '0.75rem' }}>
-                        Prefers: {attrs.preferredPartner}
+                        {t('transport.prefers', { name: attrs.preferredPartner })}
                       </div>
                     )}
                   </div>
@@ -447,10 +449,10 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
             color: 'var(--albion-gold)',
             fontSize: '1.125rem'
           }}>
-            Unpaired Transporters ({unpairedTransporters.length})
+            {t('transport.unpairedTransporters', { count: unpairedTransporters.length })}
           </h3>
           {unpairedTransporters.length === 0 ? (
-            <p className="text-dim">All transporters are paired</p>
+            <p className="text-dim">{t('transport.allTransportersPaired')}</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {unpairedTransporters.map(signup => {
@@ -469,12 +471,12 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
                     }}
                   >
                     <div style={{ fontWeight: isSelected ? 600 : 400 }}>
-                      {signup.expand?.player?.name || 'Unknown'}
-                      {preferred && ' ⭐ Preferred match'}
+                      {signup.expand?.player?.name || t('common.unknown')}
+                      {preferred && ` ⭐ ${t('transport.preferredMatch')}`}
                     </div>
                     {signup.attributes && typeof signup.attributes === 'object' && (signup.attributes as TransportSignupAttributes).preferredPartner && (
                       <div className="text-dim" style={{ fontSize: '0.75rem' }}>
-                        Prefers: {(signup.attributes as TransportSignupAttributes).preferredPartner}
+                        {t('transport.prefers', { name: (signup.attributes as TransportSignupAttributes).preferredPartner })}
                       </div>
                     )}
                   </div>

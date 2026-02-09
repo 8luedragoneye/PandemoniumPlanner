@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Signup, TransportPair } from '../types';
 import { pairsApi } from '../lib/api';
 import { transformPair } from '../lib/transformers';
@@ -12,6 +13,7 @@ interface AutoPairButtonProps {
 }
 
 export function AutoPairButton({ activityId, signups, onUpdate, compact = false }: AutoPairButtonProps): JSX.Element | null {
+  const { t } = useTranslation();
   const [pairs, setPairs] = useState<TransportPair[]>([]);
   const [loading, setLoading] = useState(true);
   const [autoPairing, setAutoPairing] = useState(false);
@@ -51,7 +53,7 @@ export function AutoPairButton({ activityId, signups, onUpdate, compact = false 
   const unpairedTransporters = transporters.filter(s => !pairedIds.has(s.id));
 
   const handleAutoPair = async () => {
-    if (!confirm('Auto-pair all remaining unpaired participants? This will pair fighters with transporters in order.')) {
+    if (!confirm(t('autoPair.confirmAutoPair'))) {
       return;
     }
 
@@ -62,7 +64,7 @@ export function AutoPairButton({ activityId, signups, onUpdate, compact = false 
       const minCount = Math.min(unpairedFighters.length, unpairedTransporters.length);
       
       if (minCount === 0) {
-        setError('No unpaired participants to pair');
+        setError(t('autoPair.noUnpaired'));
         setAutoPairing(false);
         return;
       }
@@ -79,7 +81,7 @@ export function AutoPairButton({ activityId, signups, onUpdate, compact = false 
       await loadPairs();
       if (onUpdate) onUpdate();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to auto-pair participants');
+      setError(err instanceof Error ? err.message : t('autoPair.failedToAutoPair'));
     } finally {
       setAutoPairing(false);
     }
@@ -121,7 +123,7 @@ export function AutoPairButton({ activityId, signups, onUpdate, compact = false 
             whiteSpace: 'nowrap'
           }}
         >
-          {autoPairing ? 'Pairing...' : 'Auto Pair'}
+          {autoPairing ? t('autoPair.pairing') : t('autoPair.autoPair')}
         </button>
       </div>
     );
@@ -153,7 +155,7 @@ export function AutoPairButton({ activityId, signups, onUpdate, compact = false 
           width: '100%'
         }}
       >
-        {autoPairing ? 'Auto-Pairing...' : 'Auto Pair All Remaining Participants'}
+        {autoPairing ? t('autoPair.autoPairingFull') : t('autoPair.autoPairFull')}
       </button>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { fillProvidersApi } from '../lib/api';
 import { MIN_FILL_SLOTS, MIN_FILL_WEIGHT } from '../lib/constants';
@@ -9,6 +10,7 @@ interface FillProviderRegistrationProps {
 }
 
 export function FillProviderRegistration({ onSuccess, onCancel }: FillProviderRegistrationProps): JSX.Element {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [providesSlots, setProvidesSlots] = useState(false);
   const [providesWeight, setProvidesWeight] = useState(false);
@@ -30,20 +32,20 @@ export function FillProviderRegistration({ onSuccess, onCancel }: FillProviderRe
     try {
       // Validate at least one fill type selected
       if (!providesSlots && !providesWeight) {
-        setError('Please select at least one fill type (slots or weight)');
+        setError(t('fill.selectFillType'));
         setLoading(false);
         return;
       }
 
       // Validate required fields
       if (providesSlots && (!slotOrigin.trim() || !slotTarget.trim())) {
-        setError('Slot origin and target are required when providing slot fill');
+        setError(t('fill.slotFieldsRequired'));
         setLoading(false);
         return;
       }
 
       if (providesWeight && (!weightOrigin.trim() || !weightTarget.trim())) {
-        setError('Weight origin and target are required when providing weight fill');
+        setError(t('fill.weightFieldsRequired'));
         setLoading(false);
         return;
       }
@@ -62,7 +64,7 @@ export function FillProviderRegistration({ onSuccess, onCancel }: FillProviderRe
         onSuccess();
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to register as fill provider');
+      setError(err instanceof Error ? err.message : t('fill.failedToRegister'));
     } finally {
       setLoading(false);
     }
@@ -76,7 +78,7 @@ export function FillProviderRegistration({ onSuccess, onCancel }: FillProviderRe
       border: '1px solid var(--albion-gold)'
     }}>
       <h3 style={{ marginBottom: '1rem', color: 'var(--albion-gold)' }}>
-        Register as Fill Provider
+        {t('fill.registerAsFillProvider')}
       </h3>
 
       <div style={{
@@ -88,13 +90,13 @@ export function FillProviderRegistration({ onSuccess, onCancel }: FillProviderRe
         fontSize: '0.875rem'
       }}>
         <p style={{ marginBottom: '0.5rem', fontWeight: 600, color: 'var(--albion-gold)' }}>
-          Requirements:
+          {t('fill.requirementsTitle')}
         </p>
         <ul style={{ margin: 0, paddingLeft: '1.5rem', color: 'var(--albion-text-dim)' }}>
-          <li>Must have participated in at least one transport activity</li>
-          <li>Must provide at least {MIN_FILL_SLOTS} slots or {MIN_FILL_WEIGHT}t per session</li>
-          <li>Must manage your own sources and targets</li>
-          <li>Slot and weight fills must be in separate sources</li>
+          <li>{t('fill.reqParticipated')}</li>
+          <li>{t('fill.reqMinSlots', { slots: MIN_FILL_SLOTS, weight: MIN_FILL_WEIGHT })}</li>
+          <li>{t('fill.reqManageSources')}</li>
+          <li>{t('fill.reqSeparateSources')}</li>
         </ul>
       </div>
 
@@ -107,7 +109,7 @@ export function FillProviderRegistration({ onSuccess, onCancel }: FillProviderRe
             color: 'var(--albion-text)',
             fontSize: '0.9375rem'
           }}>
-            Fill Types <span style={{ color: 'var(--albion-red)' }}>*</span>
+            {t('fill.fillTypes')} <span style={{ color: 'var(--albion-red)' }}>*</span>
           </label>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <label style={{ 
@@ -128,9 +130,9 @@ export function FillProviderRegistration({ onSuccess, onCancel }: FillProviderRe
                 style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
               />
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: '0.9375rem' }}>Provide Slot Fill</div>
+                <div style={{ fontWeight: 600, fontSize: '0.9375rem' }}>{t('fill.provideSlotFill')}</div>
                 <div style={{ fontSize: '0.8125rem', color: 'var(--albion-text-dim)', marginTop: '0.25rem' }}>
-                  Equipment items T6+ (including 4.2 and 5.1)
+                  {t('fill.slotFillDesc')}
                 </div>
               </div>
             </label>
@@ -153,9 +155,9 @@ export function FillProviderRegistration({ onSuccess, onCancel }: FillProviderRe
                 style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
               />
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: '0.9375rem' }}>Provide Weight Fill</div>
+                <div style={{ fontWeight: 600, fontSize: '0.9375rem' }}>{t('fill.provideWeightFill')}</div>
                 <div style={{ fontSize: '0.8125rem', color: 'var(--albion-text-dim)', marginTop: '0.25rem' }}>
-                  Items with stack size 20+
+                  {t('fill.weightFillDesc')}
                 </div>
               </div>
             </label>
@@ -172,12 +174,12 @@ export function FillProviderRegistration({ onSuccess, onCancel }: FillProviderRe
                 color: 'var(--albion-text)',
                 fontSize: '0.9375rem'
               }}>
-                Slot Fill Origin <span style={{ color: 'var(--albion-red)' }}>*</span>
+                {t('fill.slotFillOrigin')} <span style={{ color: 'var(--albion-red)' }}>*</span>
               </label>
               <textarea
                 value={slotOrigin}
                 onChange={(e) => setSlotOrigin(e.target.value)}
-                placeholder="e.g., Gildeninsel Unchained, Tab Equipment"
+                placeholder={t('fill.slotOriginPlaceholder')}
                 style={{ width: '100%', minHeight: '80px' }}
                 required
               />
@@ -191,12 +193,12 @@ export function FillProviderRegistration({ onSuccess, onCancel }: FillProviderRe
                 color: 'var(--albion-text)',
                 fontSize: '0.9375rem'
               }}>
-                Slot Fill Target <span style={{ color: 'var(--albion-red)' }}>*</span>
+                {t('fill.slotFillTarget')} <span style={{ color: 'var(--albion-red)' }}>*</span>
               </label>
               <textarea
                 value={slotTarget}
                 onChange={(e) => setSlotTarget(e.target.value)}
-                placeholder="e.g., Insel WallyWaddles, zentrales Haus, Kisten an der NW Wand"
+                placeholder={t('fill.slotTargetPlaceholder')}
                 style={{ width: '100%', minHeight: '80px' }}
                 required
               />
@@ -214,12 +216,12 @@ export function FillProviderRegistration({ onSuccess, onCancel }: FillProviderRe
                 color: 'var(--albion-text)',
                 fontSize: '0.9375rem'
               }}>
-                Weight Fill Origin <span style={{ color: 'var(--albion-red)' }}>*</span>
+                {t('fill.weightFillOrigin')} <span style={{ color: 'var(--albion-red)' }}>*</span>
               </label>
               <textarea
                 value={weightOrigin}
                 onChange={(e) => setWeightOrigin(e.target.value)}
-                placeholder="e.g., Gildeninsel Unchained, Tab Resources"
+                placeholder={t('fill.weightOriginPlaceholder')}
                 style={{ width: '100%', minHeight: '80px' }}
                 required
               />
@@ -233,12 +235,12 @@ export function FillProviderRegistration({ onSuccess, onCancel }: FillProviderRe
                 color: 'var(--albion-text)',
                 fontSize: '0.9375rem'
               }}>
-                Weight Fill Target <span style={{ color: 'var(--albion-red)' }}>*</span>
+                {t('fill.weightFillTarget')} <span style={{ color: 'var(--albion-red)' }}>*</span>
               </label>
               <textarea
                 value={weightTarget}
                 onChange={(e) => setWeightTarget(e.target.value)}
-                placeholder="e.g., Insel WallyWaddles, zentrales Haus, Kisten an der SE Wand"
+                placeholder={t('fill.weightTargetPlaceholder')}
                 style={{ width: '100%', minHeight: '80px' }}
                 required
               />
@@ -254,12 +256,12 @@ export function FillProviderRegistration({ onSuccess, onCancel }: FillProviderRe
             color: 'var(--albion-text)',
             fontSize: '0.9375rem'
           }}>
-            Notes <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>(optional)</span>
+            {t('common.notes')} <span style={{ color: 'var(--albion-text-dim)', fontSize: '0.875rem' }}>({t('common.optional')})</span>
           </label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Any additional information..."
+            placeholder={t('signups.additionalInfo')}
             style={{ width: '100%', minHeight: '80px' }}
           />
         </div>
@@ -284,7 +286,7 @@ export function FillProviderRegistration({ onSuccess, onCancel }: FillProviderRe
             className="btn-primary"
             disabled={loading}
           >
-            {loading ? 'Registering...' : 'Register as Fill Provider'}
+            {loading ? t('fill.registering') : t('fill.registerAsFillProviderBtn')}
           </button>
           {onCancel && (
             <button
@@ -292,7 +294,7 @@ export function FillProviderRegistration({ onSuccess, onCancel }: FillProviderRe
               className="btn-secondary"
               onClick={onCancel}
             >
-              Cancel
+              {t('common.cancel')}
             </button>
           )}
         </div>

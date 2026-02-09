@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Activity, Role, Signup, FillProvider, TransportSignupAttributes } from '../types';
 import { formatDisplayDate, getSignupCount, isRoleFull, isUpcoming, checkOverlap } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,6 +18,7 @@ interface ActivityCardProps {
 }
 
 export function ActivityCard({ activity, roles, signups }: ActivityCardProps): JSX.Element {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { activities, signups: allSignups, refetch } = useActivities();
   const isOwner = user?.id === activity.creator;
@@ -60,7 +62,7 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
       a.id !== activity.id && checkOverlap(a, activity)
     );
     if (overlaps.length > 0) {
-      return `Warning: You are already signed up for ${overlaps.length} overlapping activity(ies): ${overlaps.map(a => a.name).join(', ')}`;
+      return t('activities.overlapWarning', { count: overlaps.length, names: overlaps.map(a => a.name).join(', ') });
     }
     return '';
   })();
@@ -73,7 +75,7 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
   const handleRoleClick = async (role: Role) => {
     if (!user) return;
     if (isRoleFull(role.id, role.slots, activitySignups)) {
-      alert('This role is full');
+      alert(t('activities.roleFull'));
       return;
     }
     
@@ -92,7 +94,7 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
         });
         handleSignupSuccess();
       } catch (err: unknown) {
-        alert(err instanceof Error ? err.message : 'Failed to sign up');
+        alert(err instanceof Error ? err.message : t('signups.failedToSignup'));
       }
     }
   };
@@ -133,7 +135,7 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
                 fontSize: '0.75rem',
                 fontWeight: 600
               }}>
-                TRANSPORT
+                {t('activities.transport')}
               </span>
             )}
             <span className="text-dim" style={{ fontSize: '0.875rem' }}>
@@ -156,7 +158,7 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
                     fontWeight: 500
                   }}
                 >
-                  {type}
+                  {t(`activityTypes.${type}`) || type}
                 </span>
               ))}
               {activity.activityTypes.length > 4 && (
@@ -228,10 +230,10 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
           fontSize: '1.25rem',
           fontWeight: 600
         }}>
-          Roles ({totalSignups}/{totalSlots})
+          {t('createActivity.roles')} ({totalSignups}/{totalSlots})
         </h3>
         {activityRoles.length === 0 ? (
-          <p className="text-dim" style={{ fontStyle: 'italic' }}>No roles defined yet. {isOwner && 'Add roles to allow sign-ups.'}</p>
+          <p className="text-dim" style={{ fontStyle: 'italic' }}>{isOwner ? t('roles.noRolesOwner') : t('roles.noRolesNoOwner')}</p>
         ) : (
           <div>
             {activityRoles.map(role => {
@@ -269,7 +271,7 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
                         onClick={() => handleRoleClick(role)}
                         style={{ padding: '0.375rem 0.75rem', fontSize: '0.875rem' }}
                       >
-                        Join
+                        {t('signups.join')}
                       </button>
                     )}
                     {isOwnSignup && (
@@ -277,18 +279,18 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
                         className="btn-secondary"
                         onClick={async () => {
                           const signup = roleSignups.find(s => s.player === user?.id);
-                          if (signup && confirm('Cancel your sign-up?')) {
+                          if (signup && confirm(t('signups.cancelSignup'))) {
                             try {
                               await signupsApi.delete(signup.id);
                               handleSignupSuccess();
                             } catch (error) {
-                              alert('Failed to cancel sign-up');
+                              alert(t('signups.failedToCancel'));
                             }
                           }
                         }}
                         style={{ padding: '0.375rem 0.75rem', fontSize: '0.875rem' }}
                       >
-                        Cancel
+                        {t('common.cancel')}
                       </button>
                     )}
                   </div>
@@ -300,7 +302,7 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
                       paddingBottom: '0.75rem', 
                       borderBottom: '1px solid var(--albion-border)' 
                     }}>
-                      <strong className="text-gold" style={{ fontSize: '0.875rem' }}>Requirements:</strong>
+                      <strong className="text-gold" style={{ fontSize: '0.875rem' }}>{t('roles.requirements')}</strong>
                       {Object.entries(role.attributes).map(([key, value]) => (
                         <span key={key} className="text-dim" style={{ marginLeft: '0.5rem' }}>
                           {key}: {String(value)}
@@ -310,11 +312,11 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
                   )}
 
                   {roleSignups.length === 0 ? (
-                    <p className="text-dim" style={{ fontSize: '0.875rem', fontStyle: 'italic' }}>No sign-ups yet</p>
+                    <p className="text-dim" style={{ fontSize: '0.875rem', fontStyle: 'italic' }}>{t('signups.noSignupsYet')}</p>
                   ) : (
                     <div>
                       <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--albion-text)' }}>
-                        Participants:
+                        {t('signups.participants')}:
                       </p>
                       {roleSignups.map(signup => {
                         const isOwn = signup.player === user?.id;
@@ -347,54 +349,54 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
                                         <>
                                           {attrs.role && (
                                             <div className="text-dim" style={{ marginBottom: '0.25rem' }}>
-                                              <strong>Role:</strong> {attrs.role}
+                                              <strong>{t('signups.roleLabel')}</strong> {attrs.role}
                                             </div>
                                           )}
                                           {attrs.source && (
                                             <div className="text-dim" style={{ marginBottom: '0.25rem' }}>
-                                              <strong>Origin:</strong> {attrs.source}
+                                              <strong>{t('signups.originLabel')}</strong> {attrs.source}
                                             </div>
                                           )}
                                           {attrs.target && (
                                             <div className="text-dim" style={{ marginBottom: '0.25rem' }}>
-                                              <strong>Goal:</strong> {attrs.target}
+                                              <strong>{t('signups.goalLabel')}</strong> {attrs.target}
                                             </div>
                                           )}
                                           {(attrs.slots || attrs.gewicht) && (
                                             <div className="text-dim" style={{ marginBottom: '0.25rem' }}>
-                                              {attrs.slots && <span>Slots: {attrs.slots}</span>}
+                                              {attrs.slots && <span>{t('signups.slotsLabel')} {attrs.slots}</span>}
                                               {attrs.slots && attrs.gewicht && <span> • </span>}
-                                              {attrs.gewicht && <span>Gewicht: {attrs.gewicht}t</span>}
+                                              {attrs.gewicht && <span>{t('signups.weightLabelColon')} {attrs.gewicht}t</span>}
                                             </div>
                                           )}
                                           {attrs.preferredPartner && (
                                             <div className="text-dim" style={{ marginBottom: '0.25rem' }}>
-                                              <strong>Preferred Partner:</strong> {attrs.preferredPartner}
+                                              <strong>{t('signups.preferredPartnerLabel')}</strong> {attrs.preferredPartner}
                                             </div>
                                           )}
                                           {attrs.gearNeeds && (
                                             <div className="text-dim" style={{ marginBottom: '0.25rem' }}>
-                                              <strong>Gear:</strong> {attrs.gearNeeds}
+                                              <strong>{t('signups.gearLabel')}</strong> {attrs.gearNeeds}
                                             </div>
                                           )}
                                           {attrs.carleonTransport && (
                                             <div className="text-dim" style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--albion-border)' }}>
-                                              <strong>Carleon Transport:</strong>
+                                              <strong>{t('signups.carleonTransportLabel')}</strong>
                                               {attrs.carleonTransport.source && (
                                                 <div style={{ marginLeft: '0.5rem', marginTop: '0.25rem' }}>
-                                                  <strong>Origin:</strong> {attrs.carleonTransport.source}
+                                                  <strong>{t('signups.originLabel')}</strong> {attrs.carleonTransport.source}
                                                 </div>
                                               )}
                                               {attrs.carleonTransport.target && (
                                                 <div style={{ marginLeft: '0.5rem', marginTop: '0.25rem' }}>
-                                                  <strong>Goal:</strong> {attrs.carleonTransport.target}
+                                                  <strong>{t('signups.goalLabel')}</strong> {attrs.carleonTransport.target}
                                                 </div>
                                               )}
                                               {(attrs.carleonTransport.slots || attrs.carleonTransport.gewicht) && (
                                                 <div style={{ marginLeft: '0.5rem', marginTop: '0.25rem' }}>
-                                                  {attrs.carleonTransport.slots && <span>Slots: {attrs.carleonTransport.slots}</span>}
+                                                  {attrs.carleonTransport.slots && <span>{t('signups.slotsLabel')} {attrs.carleonTransport.slots}</span>}
                                                   {attrs.carleonTransport.slots && attrs.carleonTransport.gewicht && <span> • </span>}
-                                                  {attrs.carleonTransport.gewicht && <span>Gewicht: {attrs.carleonTransport.gewicht}t</span>}
+                                                  {attrs.carleonTransport.gewicht && <span>{t('signups.weightLabelColon')} {attrs.carleonTransport.gewicht}t</span>}
                                                 </div>
                                               )}
                                             </div>
@@ -418,18 +420,18 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
                                 <button
                                   className="btn-danger"
                                   onClick={async () => {
-                                    if (confirm('Remove this sign-up?')) {
+                                    if (confirm(t('signups.removeSignup'))) {
                                       try {
                                         await signupsApi.delete(signup.id);
                                         handleSignupSuccess();
                                       } catch (error) {
-                                        alert('Failed to remove sign-up');
+                                        alert(t('signups.failedToRemove'));
                                       }
                                     }
                                   }}
                                   style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                                 >
-                                  Remove
+                                  {t('common.remove')}
                                 </button>
                               )}
                             </div>
@@ -457,10 +459,10 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
               borderRadius: '4px'
             }}>
               <div>
-                <strong className="text-gold">Your Fill Provider Status</strong>
+                <strong className="text-gold">{t('fill.yourFillProviderStatus')}</strong>
                 <div style={{ marginTop: '0.75rem', fontSize: '0.875rem' }}>
                   <div style={{ marginBottom: '0.5rem' }}>
-                    <strong>Priority:</strong>{' '}
+                    <strong>{t('common.priority')}:</strong>{' '}
                     <span style={{
                       padding: '0.125rem 0.5rem',
                       backgroundColor: userFillProvider.priority && userFillProvider.priority > 0 
@@ -475,21 +477,21 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
                     </span>
                   </div>
                   <div style={{ marginBottom: '0.5rem' }}>
-                    <strong>Provides:</strong>{' '}
-                    {userFillProvider.providesSlots && <span>Slots</span>}
+                    <strong>{t('common.provides')}:</strong>{' '}
+                    {userFillProvider.providesSlots && <span>{t('common.slots')}</span>}
                     {userFillProvider.providesSlots && userFillProvider.providesWeight && <span> • </span>}
-                    {userFillProvider.providesWeight && <span>Weight</span>}
+                    {userFillProvider.providesWeight && <span>{t('common.weight')}</span>}
                   </div>
                   <div style={{ marginBottom: '0.5rem', fontSize: '0.8125rem', color: 'var(--albion-text-dim)' }}>
-                    <strong>Status:</strong>{' '}
+                    <strong>{t('common.status')}:</strong>{' '}
                     {userFillProvider.isActive ? (
-                      <span style={{ color: 'var(--albion-green)' }}>Active</span>
+                      <span style={{ color: 'var(--albion-green)' }}>{t('common.active')}</span>
                     ) : (
-                      <span style={{ color: 'var(--albion-red)' }}>Inactive</span>
+                      <span style={{ color: 'var(--albion-red)' }}>{t('common.inactive')}</span>
                     )}
                   </div>
                   <div style={{ fontSize: '0.8125rem', color: 'var(--albion-text-dim)', marginTop: '0.5rem' }}>
-                    <strong>How priority works:</strong> +1 for participation, -1 for assignment, -1 for problems. Higher priority = assigned first.
+                    {t('fill.howPriorityWorks')}
                   </div>
                 </div>
               </div>
@@ -504,9 +506,9 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
             }}>
               <div className="flex-between">
                 <div>
-                  <strong className="text-gold">Become a Fill Provider</strong>
+                  <strong className="text-gold">{t('fill.becomeFillProvider')}</strong>
                   <p className="text-dim" style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
-                    Help optimize transport inventories by providing fill items. Earn priority points for fair rotation.
+                    {t('fill.becomeFillProviderDesc')}
                   </p>
                 </div>
                 <button
@@ -514,7 +516,7 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
                   onClick={() => setShowFillRegistration(true)}
                   style={{ padding: '0.5rem 1rem' }}
                 >
-                  Register
+                  {t('fill.registerBtn')}
                 </button>
               </div>
               {showFillRegistration && (
@@ -548,13 +550,13 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
                 to={`/activity/${activity.id}`}
                 className="btn-secondary"
               >
-                View Details
+                {t('activities.viewDetails')}
               </Link>
               <Link
                 to={`/activity/${activity.id}/edit`}
                 className="btn-primary"
               >
-                Edit Activity
+                {t('activities.editActivity')}
               </Link>
             </>
           )}
@@ -563,12 +565,12 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
               to={`/activity/${activity.id}`}
               className="btn-secondary"
             >
-              View Details
+              {t('activities.viewDetails')}
             </Link>
           )}
         </div>
         <div className="text-dim" style={{ fontSize: '0.875rem', fontWeight: 500 }}>
-          Created by {activity.expand?.creator?.name || 'Unknown'}
+          {t('activities.createdBy', { name: activity.expand?.creator?.name || t('common.unknown') })}
         </div>
       </div>
     </CollapsibleSection>
