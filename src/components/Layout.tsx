@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { BugReportPanel } from './BugReportPanel';
 
 interface LayoutProps {
   children: ReactNode;
@@ -57,6 +58,7 @@ export function Layout({ children }: LayoutProps): JSX.Element {
         </div>
       </header>
       <main>{children}</main>
+      <BugReportPanel />
     </div>
   );
 }

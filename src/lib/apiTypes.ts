@@ -145,6 +145,21 @@ export interface ApiPremadeRole {
   updatedAt: string;
 }
 
+export interface ApiBugReport {
+  id: string;
+  title: string;
+  description: string;
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  reporterId: string;
+  createdAt: string;
+  updatedAt: string;
+  reporter?: {
+    id: string;
+    name: string;
+    username: string;
+  };
+}
+
 export interface ApiPremadeActivity {
   id: string;
   name: string;

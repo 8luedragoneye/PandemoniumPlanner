@@ -23,6 +23,7 @@ model User {
   createdPremadeActivities PremadeActivity[] @relation("PremadeActivityCreator")
   signups          Signup[]
   fillProvider      FillProvider?
+  bugReports        BugReport[]
 
   @@map("users")
 }
@@ -186,4 +187,18 @@ model PremadeRole {
   premadeActivity PremadeActivity @relation(fields: [premadeActivityId], references: [id], onDelete: Cascade)
 
   @@map("premade_roles")
+}
+
+model BugReport {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  status      String   @default("open") // open, in_progress, resolved, closed
+  reporterId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reporter User @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@map("bug_reports")
 }

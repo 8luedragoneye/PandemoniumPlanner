@@ -1,4 +1,4 @@
-import type { ApiActivity, ApiRole, ApiSignup, ApiUser, AuthResponse, ApiError, ApiTransportPair, ApiFillProvider, ApiFillAssignment, ApiPremadeActivity, ApiPremadeRole } from './apiTypes';
+import type { ApiActivity, ApiRole, ApiSignup, ApiUser, AuthResponse, ApiError, ApiTransportPair, ApiFillProvider, ApiFillAssignment, ApiPremadeActivity, ApiPremadeRole, ApiBugReport } from './apiTypes';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -318,6 +318,36 @@ export const fillAssignmentsApi = {
 
   delete: async (id: string): Promise<{ message: string }> => {
     return request<{ message: string }>(`/fill-assignments/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// Bug Reports API
+export const bugReportsApi = {
+  getAll: async (): Promise<ApiBugReport[]> => {
+    return request<ApiBugReport[]>('/bug-reports');
+  },
+
+  create: async (data: {
+    title: string;
+    description: string;
+  }): Promise<ApiBugReport> => {
+    return request<ApiBugReport>('/bug-reports', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  updateStatus: async (id: string, status: string): Promise<ApiBugReport> => {
+    return request<ApiBugReport>(`/bug-reports/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  },
+
+  delete: async (id: string): Promise<{ message: string }> => {
+    return request<{ message: string }>(`/bug-reports/${id}`, {
       method: 'DELETE',
     });
   },
