@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useActivities } from '../hooks/useActivities';
 import { useAuth } from '../contexts/AuthContext';
-import { Activity } from '../types';
 import { isPast, isUpcoming } from '../lib/utils';
 import { ActivityCard } from './ActivityCard';
 import { FilterButtons } from './FilterButtons';
@@ -313,7 +312,7 @@ export function ActivityList(): JSX.Element {
         <FilterButtons
           currentFilter={filter}
           filters={FILTER_OPTIONS.map(f => ({ value: f.value, label: t(f.label) }))}
-          onFilterChange={setFilter}
+          onFilterChange={(value) => setFilter(value as FilterType)}
         />
 
         {filteredActivities.length === 0 ? (

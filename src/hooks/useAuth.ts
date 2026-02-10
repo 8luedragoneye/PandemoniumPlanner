@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { User } from '../types';
-import { authApi, setToken, removeToken } from '../lib/api';
+import { authApi, removeToken } from '../lib/api';
 
 interface UseAuthReturn {
   user: User | null;

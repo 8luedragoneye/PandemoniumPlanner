@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useActivities } from '../hooks/useActivities';
 import { Activity, Role, Signup, TransportPair, TransportSignupAttributes, FillProvider } from '../types';
 import { formatDisplayDate, isRoleFull, checkOverlap, isUpcoming } from '../lib/utils';
-import { transformActivity, transformRole, transformSignup, transformPair } from '../lib/transformers';
+import { transformActivity, transformRole, transformSignup, transformPair, transformFillProvider } from '../lib/transformers';
 import { SignupForm } from './SignupForm';
 import { TransportPairManager } from './TransportPairManager';
 import { AutoPairButton } from './AutoPairButton';
@@ -20,7 +20,7 @@ export function ActivityDetail(): JSX.Element {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { activities, roles, signups, refetch } = useActivities();
+  const { activities, signups, refetch } = useActivities();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [activityRoles, setActivityRoles] = useState<Role[]>([]);
   const [activitySignups, setActivitySignups] = useState<Signup[]>([]);
@@ -70,7 +70,7 @@ export function ActivityDetail(): JSX.Element {
             try {
               const providers = await fillProvidersApi.getAll();
               const userProvider = providers.find(p => p.userId === user.id);
-              setUserFillProvider(userProvider || null);
+              setUserFillProvider(userProvider ? transformFillProvider(userProvider) : null);
             } catch (error) {
               console.error('Error checking fill provider status:', error);
             }
@@ -134,7 +134,7 @@ export function ActivityDetail(): JSX.Element {
       setShowSignupForm(true);
     } else {
       // Regular activity - join directly
-      if (!user) return;
+      if (!user || !activity) return;
       try {
         await signupsApi.create({
           activityId: activity.id,
@@ -451,7 +451,7 @@ export function ActivityDetail(): JSX.Element {
                       try {
                         const providers = await fillProvidersApi.getAll();
                         const userProvider = providers.find(p => p.userId === user?.id);
-                        setUserFillProvider(userProvider || null);
+                        setUserFillProvider(userProvider ? transformFillProvider(userProvider) : null);
                       } catch (error) {
                         console.error('Error checking fill provider status:', error);
                       }
@@ -566,7 +566,7 @@ export function ActivityDetail(): JSX.Element {
                       {roleSignups.map(signup => {
                         const isOwnSignup = signup.player === user?.id;
                         const transportAttrs = isTransport && signup.attributes && typeof signup.attributes === 'object' 
-                          ? (signup.attributes as TransportSignupAttributes) 
+                          ? (signup.attributes as unknown as TransportSignupAttributes) 
                           : null;
                         return (
                           <div 

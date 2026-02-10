@@ -214,7 +214,7 @@ export function EditActivity(): JSX.Element {
     const now = new Date();
     // Get current time in CET
     const cetTimeStr = formatCETDate(now);
-    const [datePart, timePart] = cetTimeStr.split('T');
+    const [, timePart] = cetTimeStr.split('T');
     const [hour, minute] = timePart.split(':').map(Number);
     
     // Round up to next hour if we're past the hour

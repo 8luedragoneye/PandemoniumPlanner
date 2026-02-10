@@ -1,6 +1,6 @@
-import type { ApiActivity, ApiRole, ApiSignup, ApiUser, AuthResponse, ApiError, ApiTransportPair, ApiFillProvider, ApiFillAssignment, ApiPremadeActivity, ApiPremadeRole, ApiBugReport } from './apiTypes';
+import type { ApiActivity, ApiRole, ApiSignup, ApiUser, AuthResponse, ApiError, ApiTransportPair, ApiFillProvider, ApiFillAssignment, ApiPremadeActivity, ApiBugReport } from './apiTypes';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001/api' : '/api');
 
 // Get auth token from localStorage
 function getToken(): string | null {
@@ -23,9 +23,9 @@ async function request<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const token = getToken();
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   };
 
   if (token) {

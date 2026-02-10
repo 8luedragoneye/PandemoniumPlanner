@@ -66,7 +66,7 @@ export function CreateActivity(): JSX.Element {
   const [selectedPremadeId, setSelectedPremadeId] = useState<string>('');
   const [isLoadingPremades, setIsLoadingPremades] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [isCreatingNewTemplate, setIsCreatingNewTemplate] = useState(false);
+  const [, setIsCreatingNewTemplate] = useState(false);
   
   // Initialize formData.date with default datetime
   useEffect(() => {
@@ -230,7 +230,7 @@ export function CreateActivity(): JSX.Element {
     const now = new Date();
     // Get current time in CET
     const cetTimeStr = formatCETDate(now);
-    const [datePart, timePart] = cetTimeStr.split('T');
+    const [, timePart] = cetTimeStr.split('T');
     const [hour, minute] = timePart.split(':').map(Number);
     
     // Round up to next hour if we're past the hour

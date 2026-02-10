@@ -115,10 +115,6 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
     return { slots, weight };
   };
 
-  const getSignupPair = (signupId: string): TransportPair | null => {
-    return pairs.find(p => p.fighter === signupId || p.transporter === signupId) || null;
-  };
-
   const getPreferredPartnerMatch = (signup: Signup, excludePaired: boolean = false): Signup | null => {
     const attrs = getTransportAttributes(signup);
     if (!attrs?.preferredPartner) return null;
@@ -131,8 +127,8 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
       const otherAttrs = getTransportAttributes(s);
       const playerName = s.expand?.player?.name || '';
       return otherAttrs?.preferredPartner?.includes(playerName) || 
-             playerName.includes(attrs.preferredPartner) ||
-             attrs.preferredPartner.includes(playerName);
+             playerName.includes(attrs.preferredPartner!) ||
+             attrs.preferredPartner!.includes(playerName);
     }) || null;
   };
 
@@ -236,7 +232,6 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
               const fighter = signups.find(s => s.id === pair.fighter);
               const transporter = signups.find(s => s.id === pair.transporter);
               const fighterAttrs = fighter ? getTransportAttributes(fighter) : null;
-              const transporterAttrs = transporter ? getTransportAttributes(transporter) : null;
 
               const fills = getFillAssignmentsForPair(pair.id);
               
@@ -474,9 +469,9 @@ export function TransportPairManager({ activityId, signups, onUpdate }: Transpor
                       {signup.expand?.player?.name || t('common.unknown')}
                       {preferred && ` ⭐ ${t('transport.preferredMatch')}`}
                     </div>
-                    {signup.attributes && typeof signup.attributes === 'object' && (signup.attributes as TransportSignupAttributes).preferredPartner && (
+                    {signup.attributes && typeof signup.attributes === 'object' && (signup.attributes as unknown as TransportSignupAttributes).preferredPartner && (
                       <div className="text-dim" style={{ fontSize: '0.75rem' }}>
-                        {t('transport.prefers', { name: (signup.attributes as TransportSignupAttributes).preferredPartner })}
+                        {t('transport.prefers', { name: (signup.attributes as unknown as TransportSignupAttributes).preferredPartner })}
                       </div>
                     )}
                   </div>

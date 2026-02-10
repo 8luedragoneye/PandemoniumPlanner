@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth';
 import activityRoutes from './routes/activities';
 import roleRoutes from './routes/roles';
@@ -20,6 +22,15 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// In production, serve the built frontend
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const distPath = path.join(__dirname, '..', 'dist');
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(distPath));
+}
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/activities', activityRoutes);
@@ -39,6 +50,13 @@ app.get('/api/health', (req, res) => {
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
+
+// SPA catch-all: serve index.html for non-API routes in production
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);

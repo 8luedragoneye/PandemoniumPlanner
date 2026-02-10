@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Signup, TransportPair } from '../types';
 import { pairsApi } from '../lib/api';
 import { transformPair } from '../lib/transformers';
-import { getTransportAttributes, getFighters, getTransporters } from '../lib/utils';
+import { getFighters, getTransporters } from '../lib/utils';
 
 interface AutoPairButtonProps {
   activityId: string;

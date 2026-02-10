@@ -106,10 +106,6 @@ export function FillAssignmentManager({ activityId, pairs, onUpdate }: FillAssig
     return providers.filter(p => p.isActive && p.providesSlots).sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
   };
 
-  const getWeightProviders = () => {
-    return providers.filter(p => p.isActive && p.providesWeight).sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
-  };
-
   const getProviderAssignmentCount = (providerId: string, fillType: 'slots' | 'weight'): number => {
     return assignments.filter(a => a.provider === providerId && a.fillType === fillType).length;
   };
@@ -154,7 +150,6 @@ export function FillAssignmentManager({ activityId, pairs, onUpdate }: FillAssig
         <div>
           {pairs.map(pair => {
             const slotAssignment = getAssignmentForPair(pair.id, 'slots');
-            const weightAssignment = getAssignmentForPair(pair.id, 'weight');
             const fighterName = pair.expand?.fighter?.expand?.player?.name || t('common.unknown');
             const transporterName = pair.expand?.transporter?.expand?.player?.name || t('common.unknown');
 

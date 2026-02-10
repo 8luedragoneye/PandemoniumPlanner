@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 export function Login(): JSX.Element {
   const { t } = useTranslation();
   const { login, register } = useAuth();
-  const [isRegister, setIsRegister] = useState(false);
+  const [isRegister] = useState(false);
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);

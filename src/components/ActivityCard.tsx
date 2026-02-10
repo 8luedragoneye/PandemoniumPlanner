@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Activity, Role, Signup, FillProvider, TransportSignupAttributes } from '../types';
-import { formatDisplayDate, getSignupCount, isRoleFull, isUpcoming, checkOverlap } from '../lib/utils';
+import { formatDisplayDate, isRoleFull, checkOverlap } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { useActivities } from '../hooks/useActivities';
 import { signupsApi, fillProvidersApi } from '../lib/api';
-import { transformSignup } from '../lib/transformers';
+import { transformSignup, transformFillProvider } from '../lib/transformers';
 import { SignupForm } from './SignupForm';
 import { FillProviderRegistration } from './FillProviderRegistration';
 import { CollapsibleSection } from './CollapsibleSection';
@@ -38,7 +38,7 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
         try {
           const providers = await fillProvidersApi.getAll();
           const userProvider = providers.find(p => p.userId === user.id);
-          setUserFillProvider(userProvider || null);
+          setUserFillProvider(userProvider ? transformFillProvider(userProvider) : null);
         } catch (error) {
           console.error('Error checking fill provider status:', error);
         }
@@ -344,7 +344,7 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
                                   <div style={{ marginTop: '0.25rem', fontSize: '0.8125rem' }}>
                                     {(() => {
                                       // Type guard to check if attributes match TransportSignupAttributes
-                                      const attrs = signup.attributes as TransportSignupAttributes;
+                                      const attrs = signup.attributes as unknown as TransportSignupAttributes;
                                       return (
                                         <>
                                           {attrs.role && (
@@ -528,7 +528,7 @@ export function ActivityCard({ activity, roles, signups }: ActivityCardProps): J
                       try {
                         const providers = await fillProvidersApi.getAll();
                         const userProvider = providers.find(p => p.userId === user?.id);
-                        setUserFillProvider(userProvider || null);
+                        setUserFillProvider(userProvider ? transformFillProvider(userProvider) : null);
                       } catch (error) {
                         console.error('Error checking fill provider status:', error);
                       }

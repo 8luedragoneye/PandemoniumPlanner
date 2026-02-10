@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { Activity, Role, TransportSignupAttributes } from '../types';
+import { Activity, Role } from '../types';
 import { signupsApi } from '../lib/api';
 
 interface SignupFormProps {
@@ -415,7 +415,7 @@ export function SignupForm({ activity, role, onSuccess, onCancel, overlapWarning
                   </label>
                   <input
                     type="text"
-                    value={attributes[key] || ''}
+                    value={String(attributes[key] || '')}
                     onChange={(e) => handleAttributeChange(key, e.target.value)}
                     placeholder={t('signups.yourKey', { key: key.toLowerCase() })}
                     style={{ width: '100%' }}

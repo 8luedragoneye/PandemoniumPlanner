@@ -105,7 +105,7 @@ export function isRoleFull(roleId: string, slots: number, signups: Signup[]): bo
  */
 export function getTransportAttributes(signup: Signup): TransportSignupAttributes | null {
   if (signup.attributes && typeof signup.attributes === 'object') {
-    const attrs = signup.attributes as TransportSignupAttributes;
+    const attrs = signup.attributes as unknown as TransportSignupAttributes;
     if (attrs.role === 'Fighter' || attrs.role === 'Transporter') {
       return attrs;
     }
