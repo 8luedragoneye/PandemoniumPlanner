@@ -15,8 +15,8 @@ A simple activity organizer for the Albion Online alliance **Schattenwandler**.
 ## Tech Stack
 
 - **Frontend**: React + TypeScript + Vite
-- **Backend**: Express.js + Prisma + SQLite
-- **Database**: SQLite (local) / PostgreSQL (production)
+- **Backend**: Express.js + Prisma
+- **Database**: PostgreSQL (hosted on Neon)
 
 ## Development
 
@@ -56,26 +56,26 @@ A simple activity organizer for the Albion Online alliance **Schattenwandler**.
 Create a `.env` file in the root:
 
 ```env
-DATABASE_URL="file:./prisma/dev.db"
+DATABASE_URL="postgresql://user:password@ep-example.neon.tech/neondb?sslmode=require"
 JWT_SECRET="your-secret-key-change-in-production"
 PORT=3001
-VITE_API_URL=http://localhost:3001/api
+NODE_ENV=development
 ```
 
 ## Database Management
 
 - **View database**: `npm run prisma:studio`
 - **Create migration**: `npm run prisma:migrate`
-- **Reset database**: Delete `prisma/dev.db` and run `npm run prisma:migrate`
+- **Reset database**: `npx prisma migrate reset` (warning: deletes all data)
 
 ## Deployment
 
-For production, use PostgreSQL instead of SQLite:
+Hosted on **Render** (app) + **Neon** (PostgreSQL). Auto-deploys on every push to `main`:
 
-1. Update `DATABASE_URL` in `.env` to your PostgreSQL connection string
-2. Update `prisma/schema.prisma` datasource to `postgresql`
-3. Run migrations: `npm run prisma:migrate`
-4. Deploy backend to Render.com or similar
-5. Deploy frontend (static site) with `VITE_API_URL` pointing to your backend
+```bash
+git add .
+git commit -m "your changes"
+git push origin main
+```
 
-See `DEPLOYMENT.md` for detailed instructions.
+See `DEPLOYMENT.md` for full setup instructions and troubleshooting.

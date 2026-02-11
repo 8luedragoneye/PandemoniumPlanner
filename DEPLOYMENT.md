@@ -1,243 +1,145 @@
 # Deployment Guide
 
-This guide explains how to deploy Pandemonium Planner to popular hosting platforms. The app uses **Express.js + Prisma + SQLite** (with optional PostgreSQL) and a **React + Vite** frontend.
-
-## Prerequisites
-
-- **Node.js 18+** installed locally for testing
-- **GitHub account** with your repository pushed
-- **Hosting platform account** (Railway, Render, or Fly.io)
+Pandemonium Planner is hosted on **Render** (app server) + **Neon** (PostgreSQL database). Render auto-deploys from the `main` branch on every push.
 
 ---
 
-## Tech Stack Overview
+## Architecture
+
+| Service | What | URL |
+|---------|------|-----|
+| **Render** | Express.js server + React frontend | [nox-planner.onrender.com](https://nox-planner.onrender.com) |
+| **Render Dashboard** | Deploy logs & settings | [dashboard.render.com](https://dashboard.render.com/web/srv-d65tvkngi27c73diisi0/events) |
+| **Neon** | PostgreSQL database | [console.neon.tech](https://console.neon.tech/app/projects/soft-morning-26455949?database=neondb) |
 
 | Layer | Technology |
 |-------|------------|
 | Frontend | React + Vite (TypeScript), builds to `dist/` |
 | Backend | Express.js at `server/index.ts`, port from `PORT` env or 3001 |
-| Database | SQLite via Prisma (can switch to PostgreSQL) |
+| Database | PostgreSQL via Prisma (hosted on Neon) |
 | Auth | JWT (jsonwebtoken) |
-| API URL | Configured via `VITE_API_URL` env var (defaults to `/api`) |
 
 ---
 
 ## Environment Variables
 
-Set these on your hosting platform:
+Set these on **Render** (Environment tab):
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `NODE_ENV` | Yes | `production` |
-| `PORT` | No | Port to listen on (platforms usually inject this) |
-| `DATABASE_URL` | Yes | SQLite: `file:./prisma/dev.db` or path to `.db` file; PostgreSQL: connection string |
-| `JWT_SECRET` | Yes | Secret for signing JWT tokens (use a long random string) |
-| `VITE_API_URL` | No | Frontend API base URL; use `/api` when frontend and backend share the same origin |
+| `DATABASE_URL` | Yes | Neon PostgreSQL connection string |
+| `JWT_SECRET` | Yes | Long random string for signing JWT tokens |
+| `VITE_API_URL` | Yes | `/api` (frontend and backend share the same origin) |
+| `PORT` | No | Render injects this automatically |
 
 ---
 
-## Build & Start Commands
+## Render Configuration
 
-**Build:**
-```bash
-npm install && npx prisma generate && npx prisma migrate deploy && npm run build
-```
+| Setting | Value |
+|---------|-------|
+| **Branch** | `main` |
+| **Runtime** | Node |
+| **Build Command** | `npm install --include=dev && npx prisma generate && npx prisma migrate deploy && npm run build` |
+| **Start Command** | `npm start` |
 
-For a compiled server, add the server build step:
-```bash
-npm install && npx prisma generate && npx prisma migrate deploy && npx tsc -p tsconfig.server.json && npm run build
-```
-
-**Start (compiled):**
-```bash
-node dist/index.js
-```
-
-**Start (TypeScript with tsx, no server build):**
-```bash
-npx tsx server/index.ts
-```
-
-> **Note:** When using the compiled server, ensure the server is built during the build phase. The `tsconfig.server.json` outputs to `dist/` alongside the Vite frontend build.
+> `npm start` runs `cross-env NODE_ENV=production node --import tsx server/index.ts`, which serves both the API and the built React frontend from the same process.
 
 ---
 
-## 1. Recommended: Railway
+## Deploying Updates (Git Pipeline)
 
-Railway is beginner-friendly and works well for full-stack Node.js apps.
-
-### Step-by-Step
-
-1. **Sign up** at [railway.app](https://railway.app) and connect your GitHub account.
-
-2. **Create a new project** → **Deploy from GitHub repo** → select `PandemoniumPlanner`.
-
-3. **Configure the service:**
-   - **Root Directory:** leave empty (or `./` if needed)
-   - **Build Command:**
-     ```bash
-     npm install && npx prisma generate && npx prisma migrate deploy && npx tsc -p tsconfig.server.json && npm run build
-     ```
-   - **Start Command:**
-     ```bash
-     node dist/index.js
-     ```
-   - **Watch Paths:** leave default
-
-4. **Add environment variables** (Settings → Variables):
-   - `NODE_ENV` = `production`
-   - `DATABASE_URL` = `file:./prisma/data.db` (for SQLite; use an absolute path if needed)
-   - `JWT_SECRET` = your secret (e.g. generate with `openssl rand -base64 32`)
-   - `VITE_API_URL` = `/api`
-
-5. **Optional: Add PostgreSQL** (recommended for production):
-   - In your project, click **+ New** → **Database** → **PostgreSQL**
-   - Copy the `DATABASE_URL` from the new database
-   - Update your Prisma schema to use `postgresql` (see [Switch to PostgreSQL](#optional-switch-to-postgresql) below)
-   - Add the `DATABASE_URL` to your service variables
-
-6. **Deploy** — Railway builds and deploys on each push.
-
-Railway assigns a public URL (e.g. `https://your-app.up.railway.app`). For SQLite, ensure you use a persistent volume if supported, or switch to PostgreSQL for reliable persistence.
-
----
-
-## 2. Alternative: Render
-
-### Web Service + Persistent Disk (SQLite)
-
-1. Go to [render.com](https://render.com) → **New** → **Web Service**
-2. Connect your GitHub repo
-3. Configure:
-   - **Build Command:**
-     ```bash
-     npm install && npx prisma generate && npx prisma migrate deploy && npx tsc -p tsconfig.server.json && npm run build
-     ```
-   - **Start Command:** `node dist/index.js`
-
-4. Add a **Persistent Disk**:
-   - **Mount Path:** `/opt/render/project/src/prisma`
-   - **Size:** 1 GB minimum  
-   This keeps the SQLite file (`dev.db` or `data.db`) across deploys.
-
-5. Set `DATABASE_URL` to a path on the disk, e.g.:
-   ```
-   file:/opt/render/project/src/prisma/data.db
-   ```
-
-6. Add `NODE_ENV`, `JWT_SECRET`, and `VITE_API_URL` as above.
-
-### Separate Frontend (Optional)
-
-- Create a **Static Site** for the frontend
-- Set `VITE_API_URL` to your Web Service URL, e.g. `https://your-api.onrender.com/api`
-
----
-
-## 3. Alternative: Fly.io
-
-1. Install the [Fly CLI](https://fly.io/docs/hands-on/install-flyctl/) and sign in:
-   ```bash
-   fly auth login
-   ```
-
-2. From your project root:
-   ```bash
-   fly launch
-   ```
-   Follow prompts; choose a region.
-
-3. Add a **Persistent Volume** for SQLite:
-   ```bash
-   fly volumes create data --size 1
-   ```
-
-4. Update `fly.toml` (or create it) with build and start commands, and set your env vars:
-   ```bash
-   fly secrets set NODE_ENV=production JWT_SECRET=your-secret DATABASE_URL=file:/data/db.sqlite
-   ```
-
-5. Deploy:
-   ```bash
-   fly deploy
-   ```
-
-For SQLite on Fly.io, mount the volume and point `DATABASE_URL` to a path on that volume. For simpler setups, use PostgreSQL (see below).
-
----
-
-## Optional: Switch to PostgreSQL
-
-Most platforms offer managed PostgreSQL. Switching makes deployment easier and avoids SQLite persistence issues.
-
-### 1. Update `prisma/schema.prisma`:
-
-```prisma
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-```
-
-### 2. Set `DATABASE_URL`:
-
-Use the connection string from your host, e.g.:
-```
-postgresql://user:password@host:5432/dbname?sslmode=require
-```
-
-### 3. Create and run migrations:
+Render auto-deploys every time you push to `main`. Your workflow is:
 
 ```bash
-npx prisma migrate dev --name init_postgres
+git add .
+git commit -m "describe your changes"
+git push origin main
 ```
 
-### 4. Deploy:
+That's it. Render detects the push, rebuilds, and redeploys automatically. You can monitor the deploy in the Render dashboard under **Events**.
 
-Use the same build/start commands; `prisma migrate deploy` will apply migrations to PostgreSQL.
+---
+
+## Initial Setup (from scratch)
+
+If you need to set this up again from zero:
+
+### 1. Create the Neon database
+
+1. Sign up at [neon.tech](https://neon.tech) (free, no credit card)
+2. Create a project (region: **EU Frankfurt** for lowest latency to Albion API)
+3. Copy the connection string — it looks like:
+   ```
+   postgresql://user:password@ep-example.neon.tech/neondb?sslmode=require
+   ```
+
+### 2. Create the initial migration
+
+Set `DATABASE_URL` in your local `.env` to the Neon connection string, then:
+
+```bash
+npx prisma migrate dev --name init
+```
+
+Commit and push the generated `prisma/migrations/` folder.
+
+### 3. Deploy on Render
+
+1. Sign up at [render.com](https://render.com) (free, no credit card)
+2. **New** > **Web Service** > connect your GitHub repo > pick the `main` branch
+3. Set the **Build Command** and **Start Command** from the table above
+4. Add all **Environment Variables** from the table above
+5. Click **Create Web Service**
+
+Render builds and gives you a public URL.
+
+---
+
+## Database Migrations
+
+When you change `prisma/schema.prisma`:
+
+1. Run locally:
+   ```bash
+   npx prisma migrate dev --name describe_your_change
+   ```
+2. Commit the new migration files in `prisma/migrations/`
+3. Push to `main` — Render runs `prisma migrate deploy` during the build
 
 ---
 
 ## Troubleshooting
 
-| Issue | Possible fix |
-|-------|--------------|
-| **502 Bad Gateway** | Check start command, ensure server listens on `0.0.0.0` or `PORT` from env. Express binds to all interfaces by default when using `app.listen(PORT, ...)`. |
-| **Database locked / SQLite errors** | SQLite does not handle high concurrency. Switch to PostgreSQL for production, or ensure only one process writes to the DB. |
-| **Data lost on redeploy** | SQLite file must be on a persistent disk/volume. Confirm mount path and `DATABASE_URL`. Prefer PostgreSQL when possible. |
-| **CORS errors** | `VITE_API_URL` should match the backend URL. If frontend and backend share the same origin, use `VITE_API_URL=/api`. |
-| **JWT / Auth failures** | Ensure `JWT_SECRET` is set and identical across restarts. Use a long random string. |
-| **Build fails: Prisma** | Run `npx prisma generate` before the app build. Include it in the build command. |
-| **Build fails: Module not found** | Run `npm install` (or `npm ci`) before build. Ensure `node_modules` is not in `.gitignore` for the install step. |
-| **Port errors** | Use `process.env.PORT` (or your platform’s port). The server already reads `PORT` with fallback to 3001. |
+| Issue | Fix |
+|-------|-----|
+| **Build fails: devDependencies missing** | Ensure build command uses `npm install --include=dev` (NODE_ENV=production skips devDeps otherwise) |
+| **Build fails: Prisma errors** | Check that `DATABASE_URL` is set on Render and starts with `postgresql://` |
+| **502 Bad Gateway** | Check start command, ensure server listens on `PORT` from env |
+| **CORS errors** | `VITE_API_URL` should be `/api` when frontend and backend share the same origin |
+| **JWT / Auth failures** | Ensure `JWT_SECRET` is set and consistent across deploys |
+| **App slow on first visit** | Render free tier spins down after 15 min of inactivity; first request takes ~30s to wake up |
+| **Migration not applied** | Ensure `prisma/migrations/` is committed and pushed; `prisma migrate deploy` runs during build |
 
 ---
 
-## Serving the Frontend from Express (Single Service)
+## Local Development
 
-To serve the React app from the same Express server:
+For local development, you can use the same Neon database or a local PostgreSQL instance:
 
-1. Build the frontend and server as above (both output to `dist/`).
-
-2. In `server/index.ts`, add **before** `app.listen`:
-
-```ts
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const distPath = path.join(__dirname, '..', 'dist');
-
-// Serve static files from Vite build
-app.use(express.static(distPath));
-
-// SPA fallback – serve index.html for non-API routes
-app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api')) return next();
-  res.sendFile(path.join(distPath, 'index.html'));
-});
+```env
+# .env
+DATABASE_URL="postgresql://user:password@ep-example.neon.tech/neondb?sslmode=require"
+JWT_SECRET="dev-secret"
+PORT=3001
+NODE_ENV=development
 ```
 
-3. Use `VITE_API_URL=/api` so the frontend talks to the same origin.
+Then run:
 
-4. Run the server from the project root (e.g. `node dist/index.js`). With this setup, `__dirname` is the `dist/` folder containing the compiled server; `path.join(__dirname, '..', 'dist')` resolves to that same `dist/` directory where Vite's `index.html` and `assets/` also live. Adjust the path if your build layout differs.
+```bash
+npm run dev:all
+```
+
+This starts the Express backend on `http://localhost:3001` and the Vite dev server on `http://localhost:3000` with API proxying.
