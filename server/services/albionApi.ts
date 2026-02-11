@@ -62,7 +62,7 @@ async function getGuildInfo(guildName: string): Promise<{ guildId: string; allia
       return null;
     }
 
-    const data: SearchResponse = await response.json();
+    const data = await response.json() as SearchResponse;
 
     // Find exact match (case-insensitive)
     const guild = data.guilds?.find(
@@ -99,7 +99,7 @@ async function getAllianceGuilds(allianceId: string): Promise<string[]> {
       return [];
     }
 
-    const data = await response.json();
+    const data = await response.json() as { Guilds?: AllianceGuild[] };
     
     // The alliance endpoint returns Guilds array (capital G)
     const guilds: AllianceGuild[] = data.Guilds || [];
@@ -126,7 +126,7 @@ async function getGuildMembers(guildId: string): Promise<string[]> {
       return [];
     }
 
-    const members: GuildMember[] = await response.json();
+    const members = await response.json() as GuildMember[];
     return members.map((m) => m.Name);
   } catch (error) {
     console.error('Failed to fetch guild members:', error);

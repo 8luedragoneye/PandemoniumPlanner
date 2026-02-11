@@ -30,14 +30,6 @@ async function findOrCreateUser(name: string) {
         name: name.trim(), // This is what we use for authentication
         username: name.trim(),
       },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        name: true,
-        createdAt: true,
-        updatedAt: true,
-      },
     });
     return user;
   } catch (error: unknown) {
@@ -72,6 +64,9 @@ router.post('/register', async (req, res) => {
 
     // Find or create user
     const user = await findOrCreateUser(trimmedName);
+    if (!user) {
+      return handleNotFound(res, 'User');
+    }
 
     // Generate token
     const secret = process.env.JWT_SECRET || DEFAULT_JWT_SECRET;
@@ -103,6 +98,9 @@ router.post('/login', async (req, res) => {
 
     // Find or create user
     const user = await findOrCreateUser(trimmedName);
+    if (!user) {
+      return handleNotFound(res, 'User');
+    }
 
     // Generate token
     const secret = process.env.JWT_SECRET || DEFAULT_JWT_SECRET;

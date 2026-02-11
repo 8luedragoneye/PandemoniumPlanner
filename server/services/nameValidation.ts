@@ -7,6 +7,7 @@
 
 import prisma from '../lib/prisma';
 import { isGuildMember } from './albionApi';
+import type { User } from '@prisma/client';
 
 /**
  * Validates a player name against Albion Online guild membership
